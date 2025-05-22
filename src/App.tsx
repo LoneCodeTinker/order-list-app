@@ -1,0 +1,205 @@
+import { useState } from 'react';
+import './App.css';
+
+function App() {
+  const [customerName, setCustomerName] = useState('');
+  const [customerPhone, setCustomerPhone] = useState('');
+  const [excelFile, setExcelFile] = useState<File | null>(null);
+  const [orderItems, setOrderItems] = useState<Array<{ barcode: string; name: string; quantity: number }>>([]);
+  const [barcodeInput, setBarcodeInput] = useState('');
+  const [itemNameInput, setItemNameInput] = useState('');
+  const [quantityInput, setQuantityInput] = useState(1);
+  const [createdBy, setCreatedBy] = useState('');
+  const [inventory, setInventory] = useState<{ [barcode: string]: { name: string } }>({});
+  // Placeholder for username, in real app get from auth
+  const username = 'user1';
+
+  const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files[0]) {
+      setExcelFile(e.target.files[0]);
+      const formData = new FormData();
+      formData.append('file', e.target.files[0]);
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/upload-inventory`, {
+          method: 'POST',
+          body: formData,
+        });
+        if (response.ok) {
+          const data = await response.json();
+          // Fetch inventory from backend (simulate by re-uploading for now)
+          // In a real app, backend should return the inventory or provide an endpoint to fetch it
+          // We'll fetch the uploaded file and parse it here for demo
+          // For now, just show a success message
+          alert('Inventory uploaded. You can now scan or enter barcodes.');
+        } else {
+          alert('Failed to upload inventory.');
+        }
+      } catch (err) {
+        alert('Error uploading inventory.');
+      }
+    }
+  };
+
+  const handleScanBarcode = () => {
+    // TODO: implement barcode scanning (use device camera)
+    alert('Barcode scanner not implemented yet.');
+  };
+
+  const handleAddItem = (barcode: string, name: string, quantity: number) => {
+    setOrderItems([...orderItems, { barcode, name, quantity }]);
+  };
+
+  const handleRemoveItem = (index: number) => {
+    setOrderItems(orderItems.filter((_, i) => i !== index));
+  };
+
+  const handleSaveOrder = async () => {
+    if (!createdBy) {
+      alert('Please enter your name (Created By) before saving the order.');
+      return;
+    }
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/save-order`, {
+        method: 'POST',
+        body: new FormData(), // will be replaced below
+      });
+      // We'll build the FormData below
+      const formData = new FormData();
+      formData.append('customer_name', customerName);
+      formData.append('customer_phone', customerPhone);
+      formData.append('username', username);
+      formData.append('created_by', createdBy);
+      formData.append('items', JSON.stringify(orderItems));
+      // Actually send the request
+      const saveResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/save-order`, {
+        method: 'POST',
+        body: formData,
+      });
+      if (saveResponse.ok) {
+        const data = await saveResponse.json();
+        alert(`Order saved as ${data.filename}`);
+        setOrderItems([]);
+      } else {
+        alert('Failed to save order.');
+      }
+    } catch (err) {
+      alert('Error saving order.');
+    }
+  };
+
+  const handleBarcodeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setBarcodeInput(e.target.value);
+  };
+
+  const handleItemNameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setItemNameInput(e.target.value);
+  };
+
+  const handleQuantityInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setQuantityInput(Number(e.target.value));
+  };
+
+  const handleAddManualItem = async () => {
+    if (!barcodeInput) return;
+    // Check barcode in backend inventory
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/item/${barcodeInput}`);
+      if (response.ok) {
+        const item = await response.json();
+        setOrderItems([...orderItems, { barcode: barcodeInput, name: item.name, quantity: quantityInput }]);
+        setBarcodeInput('');
+        setItemNameInput('');
+        setQuantityInput(1);
+      } else {
+        alert('Barcode not found in inventory.');
+      }
+    } catch (err) {
+      alert('Error checking barcode.');
+    }
+  };
+
+  return (
+    <div className="container">
+      <h2>Order List App</h2>
+      <div className="form-section">
+        <input
+          type="text"
+          placeholder="Your Name (Created By)"
+          value={createdBy}
+          onChange={e => setCreatedBy(e.target.value)}
+        />
+        <input
+          type="text"
+          placeholder="Customer Name"
+          value={customerName}
+          onChange={e => setCustomerName(e.target.value)}
+        />
+        <input
+          type="tel"
+          placeholder="Phone Number"
+          value={customerPhone}
+          onChange={e => setCustomerPhone(e.target.value)}
+        />
+        <input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} />
+      </div>
+      <div className="scan-section">
+        <button onClick={handleScanBarcode}>Scan Barcode</button>
+        <div style={{ margin: '1rem 0' }}>
+          <input
+            type="text"
+            placeholder="Enter barcode manually"
+            value={barcodeInput}
+            onChange={handleBarcodeInput}
+            style={{ width: '60%', marginRight: '0.5rem' }}
+          />
+          <input
+            type="text"
+            placeholder="Item name (auto)"
+            value={itemNameInput}
+            onChange={handleItemNameInput}
+            style={{ width: '30%', marginRight: '0.5rem' }}
+            disabled
+          />
+          <input
+            type="number"
+            min={1}
+            placeholder="Qty"
+            value={quantityInput}
+            onChange={handleQuantityInput}
+            style={{ width: '20%', marginRight: '0.5rem' }}
+          />
+          <button onClick={handleAddManualItem} style={{ padding: '0.5rem 1rem' }}>Add</button>
+        </div>
+      </div>
+      <div className="order-table-section">
+        <table>
+          <thead>
+            <tr>
+              <th>Barcode</th>
+              <th>Name</th>
+              <th>Quantity</th>
+              <th>Remove</th>
+            </tr>
+          </thead>
+          <tbody>
+            {orderItems.map((item, idx) => (
+              <tr key={idx}>
+                <td>{item.barcode}</td>
+                <td>{item.name}</td>
+                <td>{item.quantity}</td>
+                <td>
+                  <button onClick={() => handleRemoveItem(idx)}>Remove</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <button className="save-btn" onClick={handleSaveOrder} disabled={orderItems.length === 0}>
+        Save Order
+      </button>
+    </div>
+  );
+}
+
+export default App;

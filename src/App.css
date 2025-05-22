@@ -1,0 +1,136 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+
+/* Mobile-friendly container */
+.container {
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 1rem;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+}
+
+.form-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.form-section input[type="text"],
+.form-section input[type="tel"] {
+  padding: 0.75rem;
+  font-size: 1rem;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+}
+
+.form-section input[type="file"] {
+  font-size: 1rem;
+}
+
+.scan-section {
+  margin-bottom: 1.5rem;
+}
+
+.scan-section button {
+  width: 100%;
+  padding: 0.75rem;
+  font-size: 1.1rem;
+  background: #646cff;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  margin-bottom: 0.5rem;
+}
+
+.order-table-section {
+  margin-bottom: 1.5rem;
+  overflow-x: auto;
+}
+
+.order-table-section table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.order-table-section th, .order-table-section td {
+  padding: 0.5rem;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+.order-table-section th {
+  background: #f6f8fa;
+}
+
+.save-btn {
+  width: 100%;
+  padding: 0.9rem;
+  font-size: 1.1rem;
+  background: #22c55e;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: bold;
+  margin-top: 0.5rem;
+}
+.save-btn:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 0.5rem;
+  }
+  .form-section input,
+  .scan-section button,
+  .save-btn {
+    font-size: 1rem;
+    padding: 0.7rem;
+  }
+}
