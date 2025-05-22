@@ -241,7 +241,18 @@ function App() {
               <tr key={idx}>
                 <td>{item.barcode}</td>
                 <td>{item.name}</td>
-                <td>{item.quantity}</td>
+                <td>
+                  <input
+                    type="number"
+                    min={1}
+                    value={item.quantity}
+                    style={{ width: '60px' }}
+                    onChange={e => {
+                      const newQty = Number(e.target.value);
+                      setOrderItems(orderItems.map((it, i) => i === idx ? { ...it, quantity: newQty } : it));
+                    }}
+                  />
+                </td>
                 <td>
                   <button onClick={() => handleRemoveItem(idx)}>Remove</button>
                 </td>
