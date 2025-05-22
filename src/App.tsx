@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import React, { useState } from 'react';
+import BarcodeScannerComponent from 'react-qr-barcode-scanner';
 import './App.css';
 
 function App() {
@@ -11,6 +12,7 @@ function App() {
   const [quantityInput, setQuantityInput] = useState(1);
   const [createdBy, setCreatedBy] = useState('');
   const [inventory, setInventory] = useState<{ [barcode: string]: { name: string } }>({});
+  const [showScanner, setShowScanner] = useState(false);
   // Placeholder for username, in real app get from auth
   const username = 'user1';
 
@@ -41,8 +43,29 @@ function App() {
   };
 
   const handleScanBarcode = () => {
-    // TODO: implement barcode scanning (use device camera)
-    alert('Barcode scanner not implemented yet.');
+    setShowScanner(true);
+  };
+
+  const handleBarcodeDetected = async (result: string | null) => {
+    if (result) {
+      setShowScanner(false);
+      setBarcodeInput(result);
+      // Optionally auto-add if valid
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/item/${result}`);
+        if (response.ok) {
+          const item = await response.json();
+          setOrderItems([...orderItems, { barcode: result, name: item.name, quantity: quantityInput }]);
+          setBarcodeInput('');
+          setItemNameInput('');
+          setQuantityInput(1);
+        } else {
+          alert('Barcode not found in inventory.');
+        }
+      } catch (err) {
+        alert('Error checking barcode.');
+      }
+    }
   };
 
   const handleAddItem = (barcode: string, name: string, quantity: number) => {
@@ -144,6 +167,18 @@ function App() {
       </div>
       <div className="scan-section">
         <button onClick={handleScanBarcode}>Scan Barcode</button>
+        {showScanner && (
+          <div style={{ margin: '1rem 0', background: '#222', padding: '1rem', borderRadius: '8px' }}>
+            <BarcodeScannerComponent
+              width={300}
+              height={200}
+              onUpdate={(err, result) => {
+                if (result) handleBarcodeDetected(result.text);
+              }}
+            />
+            <button onClick={() => setShowScanner(false)} style={{ marginTop: '1rem' }}>Cancel</button>
+          </div>
+        )}
         <div style={{ margin: '1rem 0' }}>
           <input
             type="text"

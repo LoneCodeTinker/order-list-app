@@ -10,13 +10,15 @@
     "backend": "cd backend && uvicorn main:app --reload",
     "dev:all": "concurrently \"npm run backend\" \"npm run dev\"",
     "prestart": "pip install -r backend/requirements.txt",
-    "build:backend": "pip install -r backend/requirements.txt && echo Backend ready.",
+    "build:frontend": "vite build",
+    "build:backend": "pip install -r backend/requirements.txt && echo Backend ready. && npm install react-qr-barcode-scanner",
     "start:backend": "cd backend && uvicorn main:app --host 0.0.0.0 --port 8000",
     "start:all": "npm run build:backend && npm run build && concurrently \"npm run start:backend\" \"npx serve dist --single --listen 5173\""
   },
   "dependencies": {
     "react": "^19.1.0",
-    "react-dom": "^19.1.0"
+    "react-dom": "^19.1.0",
+    "react-qr-barcode-scanner": "^2.1.4"
   },
   "devDependencies": {
     "@eslint/js": "^9.25.0",
