@@ -2,16 +2,8 @@ import React, { useState } from 'react';
 import BarcodeScannerComponent from 'react-qr-barcode-scanner';
 import './App.css';
 
-const apiBaseUrl = (() => {
-  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-    return 'http://localhost:8000';
-  }
-  if (window.location.hostname.startsWith('192.168.')) {
-    return `http://${window.location.hostname}:8000`;
-  }
-  // For DDNS or any other public hostname
-  return `http://${window.location.hostname}:8000`;
-})();
+// Use relative API path for HTTPS proxy/tunnel compatibility
+const apiBaseUrl = '/api';
 
 function App() {
   const [customerName, setCustomerName] = useState('');
