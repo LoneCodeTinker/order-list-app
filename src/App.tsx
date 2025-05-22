@@ -24,6 +24,8 @@ function App() {
   const [createdBy, setCreatedBy] = useState('');
   const [inventory, setInventory] = useState<{ [barcode: string]: { name: string } }>({});
   const [showScanner, setShowScanner] = useState(false);
+  const [latestInventory, setLatestInventory] = useState<string | null>(null);
+  const [barcodeError, setBarcodeError] = useState<string | null>(null);
   // Placeholder for username, in real app get from auth
   const username = 'user1';
 
@@ -34,12 +36,12 @@ function App() {
         const response = await fetch(`${apiBaseUrl}/latest-inventory`);
         if (response.ok) {
           const data = await response.json();
-          alert(`Latest inventory loaded: ${data.filename}`);
+          setLatestInventory(data.filename);
         } else {
-          // No inventory found
+          setLatestInventory(null);
         }
       } catch (err) {
-        // No inventory found or backend not running
+        setLatestInventory(null);
       }
     };
     fetchLatestInventory();
@@ -91,10 +93,10 @@ function App() {
           setItemNameInput('');
           setQuantityInput(1);
         } else {
-          alert('Barcode not found in inventory.');
+          setBarcodeError('Barcode not found in inventory.');
         }
       } catch (err) {
-        alert('Error checking barcode.');
+        setBarcodeError('Error checking barcode.');
       }
     }
   };
@@ -155,7 +157,7 @@ function App() {
 
   const handleAddManualItem = async () => {
     if (!barcodeInput) return;
-    // Check barcode in backend inventory
+    setBarcodeError(null);
     try {
       const response = await fetch(`${apiBaseUrl}/item/${barcodeInput}`);
       if (response.ok) {
@@ -165,10 +167,10 @@ function App() {
         setItemNameInput('');
         setQuantityInput(1);
       } else {
-        alert('Barcode not found in inventory.');
+        setBarcodeError('Barcode not found in inventory.');
       }
     } catch (err) {
-      alert('Error checking barcode.');
+      setBarcodeError('Error checking barcode.');
     }
   };
 
@@ -195,6 +197,11 @@ function App() {
           onChange={e => setCustomerPhone(e.target.value)}
         />
         <input type="file" accept=".xlsx,.xls" onChange={handleExcelUpload} />
+        {latestInventory && (
+          <div style={{ fontSize: '0.9em', color: '#555', marginTop: '0.2em' }}>
+            Latest inventory: <b>{latestInventory}</b>
+          </div>
+        )}
       </div>
       <div className="scan-section">
         <button onClick={handleScanBarcode}>Scan Barcode</button>
@@ -218,6 +225,9 @@ function App() {
             onChange={handleBarcodeInput}
             style={{ width: '60%', marginRight: '0.5rem' }}
           />
+          {barcodeError && (
+            <span style={{ color: 'red', fontSize: '0.9em', marginLeft: '0.5em' }}>{barcodeError}</span>
+          )}
           <input
             type="text"
             placeholder="Item name (auto)"
