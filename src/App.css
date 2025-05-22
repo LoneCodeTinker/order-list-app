@@ -1,3 +1,15 @@
+/* Theme colors */
+:root {
+  --primary-purple: #5c5570;
+  --secondary-purple: #b8b3c6;
+  --white: #FEFEFE;
+}
+
+body {
+  background: var(--secondary-purple);
+  color: var(--primary-purple);
+}
+
 #root {
   max-width: 1280px;
   margin: 0 auto;
@@ -5,50 +17,14 @@
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
-
 /* Mobile-friendly container */
 .container {
   max-width: 480px;
   margin: 0 auto;
   padding: 1rem;
-  background: #fff;
+  background: var(--white);
   border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  box-shadow: 0 2px 8px rgba(92,85,112,0.07);
 }
 
 .form-section {
@@ -59,78 +35,123 @@
 }
 
 .form-section input[type="text"],
-.form-section input[type="tel"] {
+.form-section input[type="tel"],
+.form-section input[type="number"],
+.form-section input[type="file"],
+input, select, textarea {
   padding: 0.75rem;
   font-size: 1rem;
-  border: 1px solid #ccc;
+  border: 1.5px solid var(--primary-purple);
   border-radius: 6px;
+  background: var(--white) !important;
+  color: var(--primary-purple) !important;
+  box-sizing: border-box;
+  outline: none;
+  transition: border 0.2s;
+}
+input:focus, select:focus, textarea:focus {
+  border: 2px solid var(--primary-purple);
+  background: var(--white) !important;
+  color: var(--primary-purple) !important;
+}
+input::placeholder, textarea::placeholder {
+  color: var(--primary-purple);
+  opacity: 0.7;
+}
+input:disabled {
+  background: var(--secondary-purple) !important;
+  color: #888 !important;
 }
 
-.form-section input[type="file"] {
-  font-size: 1rem;
+/* Remove browser autofill background */
+input:-webkit-autofill,
+input:-webkit-autofill:focus {
+  -webkit-box-shadow: 0 0 0 1000px var(--white) inset !important;
+  -webkit-text-fill-color: var(--primary-purple) !important;
+  transition: background-color 5000s ease-in-out 0s;
 }
 
 .scan-section {
   margin-bottom: 1.5rem;
 }
-
-.scan-section button {
+.scan-section button,
+button,
+.save-btn {
   width: 100%;
   padding: 0.75rem;
   font-size: 1.1rem;
-  background: #646cff;
-  color: #fff;
+  background: var(--primary-purple) !important;
+  color: var(--white) !important;
   border: none;
   border-radius: 6px;
   cursor: pointer;
+  font-weight: bold;
   margin-bottom: 0.5rem;
+  box-shadow: 0 2px 8px rgba(92,85,112,0.08);
+  transition: background 0.18s, color 0.18s, box-shadow 0.18s;
+}
+button:hover, .scan-section button:hover, .save-btn:hover,
+button:focus, .scan-section button:focus, .save-btn:focus {
+  background: var(--secondary-purple) !important;
+  color: var(--primary-purple) !important;
+  outline: 2px solid var(--primary-purple);
+}
+.save-btn:disabled {
+  background: #ccc !important;
+  color: #fff !important;
+  cursor: not-allowed;
 }
 
 .order-table-section {
   margin-bottom: 1.5rem;
   overflow-x: auto;
 }
-
-.order-table-section table {
+.order-table-section table,
+table {
   width: 100%;
   border-collapse: collapse;
+  background: var(--white);
+  color: var(--primary-purple);
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(92,85,112,0.08);
 }
-
-.order-table-section th, .order-table-section td {
+.order-table-section th, .order-table-section td,
+th, td {
   padding: 0.5rem;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--secondary-purple);
   text-align: left;
+  background: var(--white);
+  color: var(--primary-purple);
+}
+th, .order-table-section th {
+  background: var(--secondary-purple);
+  color: var(--primary-purple);
+  font-weight: 600;
 }
 
-.order-table-section th {
-  background: #f6f8fa;
+/* Error messages */
+.error {
+  color: #d32f2f;
+  background: #fff0f0;
+  border: 1px solid #d32f2f;
+  border-radius: 4px;
+  padding: 0.3em 0.7em;
+  margin: 0.5em 0 0.5em 0;
+  font-size: 0.98em;
 }
 
-.save-btn {
-  width: 100%;
-  padding: 0.9rem;
-  font-size: 1.1rem;
-  background: #22c55e;
-  color: #fff;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: bold;
-  margin-top: 0.5rem;
-}
-.save-btn:disabled {
-  background: #ccc;
-  cursor: not-allowed;
-}
-
+/* Responsive adjustments */
 @media (max-width: 600px) {
+  table, th, td {
+    font-size: 0.95rem;
+    padding: 0.4em;
+  }
+  input, select, textarea, button {
+    font-size: 1rem;
+    padding: 0.45em 0.6em;
+  }
   .container {
     padding: 0.5rem;
-  }
-  .form-section input,
-  .scan-section button,
-  .save-btn {
-    font-size: 1rem;
-    padding: 0.7rem;
   }
 }
