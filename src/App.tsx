@@ -2,6 +2,17 @@ import React, { useState } from 'react';
 import BarcodeScannerComponent from 'react-qr-barcode-scanner';
 import './App.css';
 
+const apiBaseUrl = (() => {
+  if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+    return 'http://localhost:8000';
+  }
+  if (window.location.hostname.startsWith('192.168.')) {
+    return `http://${window.location.hostname}:8000`;
+  }
+  // For DDNS or any other public hostname
+  return `http://${window.location.hostname}:8000`;
+})();
+
 function App() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
@@ -20,7 +31,7 @@ function App() {
   React.useEffect(() => {
     const fetchLatestInventory = async () => {
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/latest-inventory`);
+        const response = await fetch(`${apiBaseUrl}/latest-inventory`);
         if (response.ok) {
           const data = await response.json();
           alert(`Latest inventory loaded: ${data.filename}`);
@@ -46,7 +57,7 @@ function App() {
       const formData = new FormData();
       formData.append('file', file);
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/upload-inventory`, {
+        const response = await fetch(`${apiBaseUrl}/upload-inventory`, {
           method: 'POST',
           body: formData,
         });
@@ -72,7 +83,7 @@ function App() {
       setBarcodeInput(result);
       // Optionally auto-add if valid
       try {
-        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/item/${result}`);
+        const response = await fetch(`${apiBaseUrl}/item/${result}`);
         if (response.ok) {
           const item = await response.json();
           setOrderItems([...orderItems, { barcode: result, name: item.name, quantity: quantityInput }]);
@@ -102,7 +113,7 @@ function App() {
       return;
     }
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/save-order`, {
+      const response = await fetch(`${apiBaseUrl}/save-order`, {
         method: 'POST',
         body: new FormData(), // will be replaced below
       });
@@ -114,7 +125,7 @@ function App() {
       formData.append('created_by', createdBy);
       formData.append('items', JSON.stringify(orderItems));
       // Actually send the request
-      const saveResponse = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/save-order`, {
+      const saveResponse = await fetch(`${apiBaseUrl}/save-order`, {
         method: 'POST',
         body: formData,
       });
@@ -146,7 +157,7 @@ function App() {
     if (!barcodeInput) return;
     // Check barcode in backend inventory
     try {
-      const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/item/${barcodeInput}`);
+      const response = await fetch(`${apiBaseUrl}/item/${barcodeInput}`);
       if (response.ok) {
         const item = await response.json();
         setOrderItems([...orderItems, { barcode: barcodeInput, name: item.name, quantity: quantityInput }]);
