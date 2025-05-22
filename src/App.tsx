@@ -24,6 +24,8 @@ function App() {
   const [createdBy, setCreatedBy] = useState('');
   const [inventory, setInventory] = useState<{ [barcode: string]: { name: string } }>({});
   const [showScanner, setShowScanner] = useState(false);
+  const [scannerError, setScannerError] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [latestInventory, setLatestInventory] = useState<string | null>(null);
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
   // Placeholder for username, in real app get from auth
@@ -76,6 +78,7 @@ function App() {
   };
 
   const handleScanBarcode = () => {
+    setScannerError(null);
     setShowScanner(true);
   };
 
@@ -210,11 +213,38 @@ function App() {
             <BarcodeScannerComponent
               width={300}
               height={200}
+              facingMode={facingMode}
               onUpdate={(err, result) => {
-                if (result) handleBarcodeDetected(result.text);
+                if (err) {
+                  setScannerError('Cannot access camera. Please allow camera access or check device permissions.');
+                } else if (result) {
+                  setScannerError(null);
+                  // react-qr-barcode-scanner returns result as string (barcode) or as an object with a 'rawValue' property
+                  // Try both, and always cast to string
+                  if (typeof result === 'string') {
+                    handleBarcodeDetected(result);
+                  } else if (result && typeof (result as any).rawValue === 'string') {
+                    handleBarcodeDetected((result as any).rawValue);
+                  } else {
+                    handleBarcodeDetected(String(result));
+                  }
+                }
               }}
             />
-            <button onClick={() => setShowScanner(false)} style={{ marginTop: '1rem' }}>Cancel</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '0.5rem' }}>
+              <button onClick={() => setShowScanner(false)} style={{ marginTop: 0 }}>Cancel</button>
+              <button onClick={() => setFacingMode(facingMode === 'environment' ? 'user' : 'environment')} style={{ marginTop: 0 }}>
+                Flip Camera
+              </button>
+            </div>
+            {scannerError && (
+              <div style={{ color: 'red', background: '#fff0f0', borderRadius: 4, padding: '0.5em', marginTop: '0.5em' }}>{scannerError}</div>
+            )}
+            {window.location.protocol !== 'https:' && (
+              <div style={{ color: '#d32f2f', fontSize: '0.95em', marginTop: '0.5em' }}>
+                Camera access may not work on HTTP. Please use HTTPS for camera features on mobile browsers.
+              </div>
+            )}
           </div>
         )}
         <div style={{ margin: '1rem 0' }}>
