@@ -6,6 +6,7 @@ from dotenv import load_dotenv
 import json
 import openpyxl
 from datetime import datetime
+import glob
 
 load_dotenv()
 
@@ -34,16 +35,27 @@ ORDER_SAVE_DIR = os.getenv("ORDER_SAVE_DIR", os.path.join(os.getcwd(), "orders")
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(ORDER_SAVE_DIR, exist_ok=True)
 
+def get_latest_inventory_file():
+    files = glob.glob(os.path.join(UPLOAD_DIR, '*.xls*'))
+    if not files:
+        return None
+    return max(files, key=os.path.getctime)
+
 @app.post("/upload-inventory")
 def upload_inventory(file: UploadFile = File(...)):
-    # Save uploaded file to server
-    file_path = os.path.join(UPLOAD_DIR, file.filename)
+    # Only accept .xls or .xlsx
+    if not (file.filename.endswith('.xls') or file.filename.endswith('.xlsx')):
+        return JSONResponse(status_code=400, content={"error": "Only .xls and .xlsx files are allowed."})
+    # Save uploaded file with timestamp
+    now = datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    ext = os.path.splitext(file.filename)[1]
+    new_filename = f"{now}{ext}"
+    file_path = os.path.join(UPLOAD_DIR, new_filename)
     with open(file_path, "wb") as f:
         f.write(file.file.read())
     # Load inventory into memory
     wb = openpyxl.load_workbook(file_path)
     ws = wb.active
-    # Assume first row is header, barcode in col 1, name in col 2
     inventory.clear()
     for row in ws.iter_rows(min_row=2, values_only=True):
         barcode, name = row[0], row[1]
@@ -51,9 +63,35 @@ def upload_inventory(file: UploadFile = File(...)):
             inventory[str(barcode)] = {"name": name}
     return {"count": len(inventory), "saved_as": file_path}
 
+@app.get("/latest-inventory")
+def latest_inventory():
+    latest_file = get_latest_inventory_file()
+    if not latest_file:
+        return JSONResponse(status_code=404, content={"error": "No inventory file found."})
+    # Load inventory into memory
+    wb = openpyxl.load_workbook(latest_file)
+    ws = wb.active
+    inventory.clear()
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        barcode, name = row[0], row[1]
+        if barcode:
+            inventory[str(barcode)] = {"name": name}
+    return {"count": len(inventory), "filename": os.path.basename(latest_file)}
+
 @app.get("/item/{barcode}")
 def get_item(barcode: str):
-    item = inventory.get(barcode)
+    # Always use latest inventory file
+    latest_file = get_latest_inventory_file()
+    if not latest_file:
+        return JSONResponse(status_code=404, content={"error": "No inventory file found."})
+    wb = openpyxl.load_workbook(latest_file)
+    ws = wb.active
+    temp_inventory = {}
+    for row in ws.iter_rows(min_row=2, values_only=True):
+        barcode_val, name = row[0], row[1]
+        if barcode_val:
+            temp_inventory[str(barcode_val)] = {"name": name}
+    item = temp_inventory.get(barcode)
     if item:
         return item
     return JSONResponse(status_code=404, content={"error": "Item not found"})

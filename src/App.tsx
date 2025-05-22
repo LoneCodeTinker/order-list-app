@@ -16,11 +16,35 @@ function App() {
   // Placeholder for username, in real app get from auth
   const username = 'user1';
 
+  // On mount, check for latest inventory
+  React.useEffect(() => {
+    const fetchLatestInventory = async () => {
+      try {
+        const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/latest-inventory`);
+        if (response.ok) {
+          const data = await response.json();
+          alert(`Latest inventory loaded: ${data.filename}`);
+        } else {
+          // No inventory found
+        }
+      } catch (err) {
+        // No inventory found or backend not running
+      }
+    };
+    fetchLatestInventory();
+  }, []);
+
   const handleExcelUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
-      setExcelFile(e.target.files[0]);
+      const file = e.target.files[0];
+      // Only accept .xls or .xlsx
+      if (!file.name.endsWith('.xls') && !file.name.endsWith('.xlsx')) {
+        alert('Only .xls and .xlsx files are allowed.');
+        return;
+      }
+      setExcelFile(file);
       const formData = new FormData();
-      formData.append('file', e.target.files[0]);
+      formData.append('file', file);
       try {
         const response = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:8000'}/upload-inventory`, {
           method: 'POST',
@@ -28,10 +52,6 @@ function App() {
         });
         if (response.ok) {
           const data = await response.json();
-          // Fetch inventory from backend (simulate by re-uploading for now)
-          // In a real app, backend should return the inventory or provide an endpoint to fetch it
-          // We'll fetch the uploaded file and parse it here for demo
-          // For now, just show a success message
           alert('Inventory uploaded. You can now scan or enter barcodes.');
         } else {
           alert('Failed to upload inventory.');
