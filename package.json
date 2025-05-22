@@ -13,7 +13,9 @@
     "build:frontend": "vite build",
     "build:backend": "pip install -r backend/requirements.txt && echo Backend ready. && npm install react-qr-barcode-scanner",
     "start:backend": "cd backend && uvicorn main:app --host 0.0.0.0 --port 8000",
-    "start:all": "npm run build:backend && npm run build && concurrently \"npm run start:backend\" \"npx serve dist --single --listen 5173\""
+    "start:all": "npm run build:backend && npm run build && concurrently \"npm run start:backend\" \"npx serve dist --single --listen 5173\"",
+    "dev:watch": "concurrently \"npm run backend:watch\" \"npm run dev\"",
+    "backend:watch": "cd backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000"
   },
   "dependencies": {
     "react": "^19.1.0",
