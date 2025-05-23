@@ -11,7 +11,7 @@
     "dev:all": "concurrently \"npm run backend\" \"npm run dev\"",
     "build:frontend": "vite build",
     "build:backend": "bash ./build_backend.sh",
-    "start:backend": "cd backend && source ../venv/bin/activate && uvicorn main:app --host 0.0.0.0 --port 8000",
+    "start:backend": "cd backend && ../venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000",
     "start:all": "npm run build:backend && npm run build:frontend && concurrently \"npm run start:backend\" \"npx serve dist --single --listen 5173\"",
     "dev:watch": "concurrently \"npm run backend:watch\" \"npm run dev\"",
     "backend:watch": "cd backend && uvicorn main:app --reload --host 0.0.0.0 --port 8000"
