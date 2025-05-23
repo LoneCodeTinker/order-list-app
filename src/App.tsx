@@ -57,6 +57,9 @@ function App() {
           method: 'POST',
           body: formData,
         });
+        // Debug: log the raw response for troubleshooting
+        const raw = await response.clone().text();
+        console.log('Upload inventory response:', raw);
         if (response.ok) {
           const data = await response.json();
           alert('Inventory uploaded. You can now scan or enter barcodes.');
