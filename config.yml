@@ -1,0 +1,10 @@
+tunnel: 382c1d3f-9096-4569-ab4f-d7f6cd6cac7b
+credentials-file: /home/memon/.cloudflared/382c1d3f-9096-4569-ab4f-d7f6cd6cac7b.json
+
+ingress:
+  - hostname: order.mrmemon.uk
+    path: /api/*
+    service: http://localhost:8000
+    originRequest:
+      stripPath: true
+  - service: http_status:404

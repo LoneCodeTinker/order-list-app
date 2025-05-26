@@ -1,0 +1,4 @@
+#new Hi.. we need a web app that works on phones..
+It'll be served from an Ubuntu server through cloudflare Tunnel, and local network IP (Local IP is preferred)
+the main functionality of the app is it should read an excel file that has a long (very long) list of items, and it creates an order list with chosen items and their quantity entered by the user and save an excel file with that order list
+the interface should asks for a customers name, and a phone number, then open the camera to read a barcode and locate the item from the excel list then asks the user for quantity and add it to a table.. after finishing the user tap a save button to save a new excel file of that order with file name: date, customer name, and username who's creating the order on a shared dir on the network or a shared dir on the same server

@@ -1,0 +1,44 @@
+^C[1] 
+[1]  INFO  Gracefully shutting down. Please wait...
+[1] npx serve dist --single --listen 5173 exited with code SIGINT
+[0] INFO:     Shutting down
+[0] INFO:     Finished server process [5657]
+[0] ERROR:    Traceback (most recent call last):
+[0]   File "/usr/lib/python3.12/asyncio/runners.py", line 194, in run
+[0]     return runner.run(main)
+[0]            ^^^^^^^^^^^^^^^^
+[0]   File "/usr/lib/python3.12/asyncio/runners.py", line 118, in run
+[0]     return self._loop.run_until_complete(task)
+[0]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0]   File "uvloop/loop.pyx", line 1512, in uvloop.loop.Loop.run_until_complete
+[0]   File "uvloop/loop.pyx", line 1505, in uvloop.loop.Loop.run_until_complete
+[0]   File "uvloop/loop.pyx", line 1379, in uvloop.loop.Loop.run_forever
+[0]   File "uvloop/loop.pyx", line 557, in uvloop.loop.Loop._run
+[0]   File "uvloop/loop.pyx", line 476, in uvloop.loop.Loop._on_idle
+[0]   File "uvloop/cbhandles.pyx", line 83, in uvloop.loop.Handle._run
+[0]   File "uvloop/cbhandles.pyx", line 63, in uvloop.loop.Handle._run
+[0]   File "/home/deploy/orderapp/venv/lib/python3.12/site-packages/uvicorn/server.py", line 69, in serve
+[0]     with self.capture_signals():
+[0]   File "/usr/lib/python3.12/contextlib.py", line 144, in __exit__
+[0]     next(self.gen)
+[0]   File "/home/deploy/orderapp/venv/lib/python3.12/site-packages/uvicorn/server.py", line 330, in capture_signals
+[0]     signal.raise_signal(captured_signal)
+[0]   File "/usr/lib/python3.12/asyncio/runners.py", line 157, in _on_sigint
+[0]     raise KeyboardInterrupt()
+[0] KeyboardInterrupt
+[0] 
+[0] During handling of the above exception, another exception occurred:
+[0] 
+[0] Traceback (most recent call last):
+[0]   File "/home/deploy/orderapp/venv/lib/python3.12/site-packages/starlette/routing.py", line 699, in lifespan
+[0]     await receive()
+[0]   File "/home/deploy/orderapp/venv/lib/python3.12/site-packages/uvicorn/lifespan/on.py", line 137, in receive
+[0]     return await self.receive_queue.get()
+[0]            ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+[0]   File "/usr/lib/python3.12/asyncio/queues.py", line 158, in get
+[0]     await getter
+[0] asyncio.exceptions.CancelledError
+[0] 
+[0] npm run start:backend exited with code SIGINT
+
+(venv) root@orderapp:/home/deploy/orderapp# 
