@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 # build_backend.sh: Setup Python venv and install backend requirements
 set -e
 
@@ -8,7 +8,7 @@ if [ ! -d "venv" ]; then
 fi
 
 # Activate venv and install requirements
-source venv/bin/activate
+. venv/bin/activate
 pip install --upgrade pip
 pip install -r backend/requirements.txt
 
