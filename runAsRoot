@@ -4,7 +4,7 @@ apt install nginx
 # install SSL Certificates to get https access
 # replace the Local IP with your servers IP and the domain name with your domain
 mkcert -install
-mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem order.mrmemon.uk 192.168.1.61 localhost
+mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem order.mrmemon.uk 192.168.1.61 $(hostname) localhost 127.0.0.1 ::1
 
 # install npm
 apt install npm

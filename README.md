@@ -96,7 +96,7 @@ apt install nginx
 
 # Install mkcert and generate SSL certificates for HTTPS (replace IP/domain as needed)
 mkcert -install
-mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem order.mrmemon.uk 192.168.1.61 localhost
+mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem order.mrmemon.uk 192.168.1.61 $(hostname) localhost 127.0.0.1 ::1
 
 # Install npm
 apt install npm
