@@ -1,0 +1,33 @@
+# Redirect HTTP to HTTPS
+server {
+    listen 80;
+    server_name order.mrmemon.uk 192.168.1.61 localhost;
+    return 301 https://$host$request_uri;
+}
+
+# Serve HTTPS
+server {
+    listen 443 ssl;
+    server_name order.mrmemon.uk 192.168.1.61 localhost;
+
+    ssl_certificate     /etc/nginx/ssl/orderapp.local.pem;
+    ssl_certificate_key /etc/nginx/ssl/orderapp.local-key.pem;
+
+    # Proxy API requests to backend, strip /api
+    location /api/ {
+        proxy_pass http://localhost:8000/;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        rewrite ^/api/(.*)$ /$1 break;
+    }
+
+    # Serve frontend for all other requests
+    location / {
+        proxy_pass http://localhost:5173;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_http_version 1.1;
+    }
+}

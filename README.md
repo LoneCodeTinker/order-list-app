@@ -83,3 +83,53 @@ export default tseslint.config({
   },
 })
 ```
+
+---
+
+## Ubuntu Server Deployment (as root)
+
+The following steps automate the setup of the Order List App on a fresh Ubuntu server, including nginx reverse proxy, SSL certificates, Python venv, and app deployment. Run these as root or with sudo:
+
+```sh
+# Install nginx reverse proxy server
+apt install nginx
+
+# Install mkcert and generate SSL certificates for HTTPS (replace IP/domain as needed)
+mkcert -install
+mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem order.mrmemon.uk 192.168.1.61 localhost
+
+# Install npm
+apt install npm
+
+# Install python venv
+apt install python3-venv
+
+# Clone the app from GitHub
+cd ~
+git clone https://github.com/LoneCodeTinker/order-list-app.git orderapp
+cd orderapp/
+
+# Copy nginx config and enable site
+cp nginxConfig /etc/nginx/sites-available/orderapp
+ln -s /etc/nginx/sites-available/orderapp /etc/nginx/sites-enabled/
+
+# Verify config and restart nginx
+nginx -t
+systemctl restart nginx
+
+# (Optional) Create Python venv if needed
+# python3 -m venv venv
+
+# Install app dependencies and build
+npm install
+npm run build
+npm run start:all
+```
+
+**Notes:**
+- Make sure `/etc/nginx/ssl/orderapp.local.pem` and `/etc/nginx/ssl/orderapp.local-key.pem` include all hostnames you want to serve (e.g., `order.mrmemon.uk`, your LAN IP, and `localhost`).
+- The nginx config proxies `/api/` to the backend and serves the frontend for all other requests.
+- For production, ensure your server's firewall allows ports 80 and 443.
+- For Cloudflare Tunnel, point the service to `https://localhost` if using SSL in nginx.
+
+---

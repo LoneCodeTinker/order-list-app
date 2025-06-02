@@ -1,0 +1,36 @@
+# install nginx reverse proxy server to manage our requests
+apt install nginx
+
+# install SSL Certificates to get https access
+# replace the Local IP with your servers IP and the domain name with your domain
+mkcert -install
+mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem order.mrmemon.uk 192.168.1.61 localhost
+
+# install npm
+apt install npm
+
+# install python venv
+apt install Python3-venv
+
+# Clone the app from GitHub
+git clone https://github.com/LoneCodeTinker/order-list-app.git ~/orderapp
+
+# go to the dir
+cd ~/orderapp/
+
+# get the nginx config
+cp nginxConfig /etc/nginx/sites-available/orderapp
+# link the enabled site
+ln /etc/nginx/sites-available/orderapp /etc/nginx/sites-enabled/ 
+
+# verify config and restart nginx to apply the changes
+nginx -t
+systemctl restart nginx
+
+# the following command creates the virtual environment for installing pip requirements.. un-comment as necessary, for example: if you get 'error: externally-managed-environment'
+# Python3 -m venv venv
+
+# Deploy and run the app
+npm install
+npm run build
+npm run start:all
