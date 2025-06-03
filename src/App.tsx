@@ -82,21 +82,23 @@ function App() {
     if (result) {
       setShowScanner(false);
       setBarcodeInput(result);
+      setBarcodeError(null);
+      // Fetch item details and fill manual entry fields, but do NOT auto-add to order table
       try {
         const response = await fetch(`${apiBaseUrl}/item/${result}`);
         if (response.ok) {
           const item = await response.json();
-          const price = item.price || 0;
-          const total = price * quantityInput;
-          const vat = total * 0.15;
-          setOrderItems([...orderItems, { barcode: result, name: item.name, quantity: quantityInput, price, total, vat }]);
-          setBarcodeInput('');
-          setItemNameInput('');
-          setQuantityInput(1);
+          setItemNameInput(item.name || '');
+          setPriceInput(item.price ?? 0);
+          setQuantityInput(1); // Reset to 1 for new scan
         } else {
+          setItemNameInput('');
+          setPriceInput(undefined);
           setBarcodeError('Barcode not found in inventory.');
         }
       } catch (err) {
+        setItemNameInput('');
+        setPriceInput(undefined);
         setBarcodeError('Error checking barcode.');
       }
     }
