@@ -13,6 +13,7 @@ function App() {
   const [barcodeInput, setBarcodeInput] = useState('');
   const [itemNameInput, setItemNameInput] = useState('');
   const [quantityInput, setQuantityInput] = useState(1);
+  const [priceInput, setPriceInput] = useState<number | undefined>(undefined);
   const [createdBy, setCreatedBy] = useState('');
   const [inventory, setInventory] = useState<{ [barcode: string]: { name: string } }>({});
   const [showScanner, setShowScanner] = useState(false);
@@ -151,18 +152,22 @@ function App() {
     setBarcodeInput(value);
     setBarcodeError(null);
     setItemNameInput('');
-    // If barcode is not empty, fetch the item name
+    setPriceInput(undefined);
+    // If barcode is not empty, fetch the item name and price
     if (value) {
       try {
         const response = await fetch(`${apiBaseUrl}/item/${value}`);
         if (response.ok) {
           const item = await response.json();
           setItemNameInput(item.name || '');
+          setPriceInput(item.price ?? 0);
         } else {
           setItemNameInput('');
+          setPriceInput(undefined);
         }
       } catch {
         setItemNameInput('');
+        setPriceInput(undefined);
       }
     }
   };
@@ -175,23 +180,29 @@ function App() {
     setQuantityInput(Number(e.target.value));
   };
 
+  const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPriceInput(Number(e.target.value));
+  };
+
   const handleAddManualItem = async () => {
     if (!barcodeInput) return;
     setBarcodeError(null);
     try {
       const response = await fetch(`${apiBaseUrl}/item/${barcodeInput}`);
+      let price = priceInput;
+      let name = '';
       if (response.ok) {
         const item = await response.json();
-        const price = item.price || 0;
-        const total = price * quantityInput;
-        const vat = total * 0.15;
-        setOrderItems([...orderItems, { barcode: barcodeInput, name: item.name, quantity: quantityInput, price, total, vat }]);
-        setBarcodeInput('');
-        setItemNameInput('');
-        setQuantityInput(1);
-      } else {
-        setBarcodeError('Barcode not found in inventory.');
+        name = item.name;
+        if (price === undefined) price = item.price || 0;
       }
+      const total = (price || 0) * quantityInput;
+      const vat = total * 0.15;
+      setOrderItems([...orderItems, { barcode: barcodeInput, name, quantity: quantityInput, price, total, vat }]);
+      setBarcodeInput('');
+      setItemNameInput('');
+      setQuantityInput(1);
+      setPriceInput(undefined);
     } catch (err) {
       setBarcodeError('Error checking barcode.');
     }
@@ -267,14 +278,16 @@ function App() {
             )}
           </div>
         )}
-        <div style={{ margin: '1rem 0' }}>
+        <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <label htmlFor="barcode-input" style={{ marginRight: '0.5rem' }}>Barcode:</label>
           <input
+            id="barcode-input"
             type="text"
             placeholder="Enter barcode manually"
             value={barcodeInput}
             onChange={handleBarcodeInput}
             onBlur={handleBarcodeInput}
-            style={{ width: '60%', marginRight: '0.5rem' }}
+            style={{ width: '40%', marginRight: '0.5rem' }}
           />
           {barcodeError && (
             <span style={{ color: 'red', fontSize: '0.9em', marginLeft: '0.5em' }}>{barcodeError}</span>
@@ -287,13 +300,26 @@ function App() {
             style={{ width: '30%', marginRight: '0.5rem' }}
             disabled
           />
+          <label htmlFor="quantity-input" style={{ marginLeft: '0.5rem' }}>Qty:</label>
           <input
+            id="quantity-input"
             type="number"
             min={1}
             placeholder="Qty"
             value={quantityInput}
             onChange={handleQuantityInput}
-            style={{ width: '20%', marginRight: '0.5rem' }}
+            style={{ width: '15%', marginRight: '0.5rem' }}
+          />
+          <label htmlFor="price-input" style={{ marginLeft: '0.5rem' }}>Price:</label>
+          <input
+            id="price-input"
+            type="number"
+            min={0}
+            step="0.01"
+            placeholder="Price"
+            value={priceInput ?? ''}
+            onChange={handlePriceInput}
+            style={{ width: '15%', marginRight: '0.5rem' }}
           />
           <button onClick={handleAddManualItem} style={{ padding: '0.5rem 1rem' }}>Add</button>
         </div>
@@ -331,7 +357,21 @@ function App() {
                     }}
                   />
                 </td>
-                <td>{item.price?.toFixed(2) ?? ''}</td>
+                <td>
+                  <input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    value={item.price ?? 0}
+                    style={{ width: '60px' }}
+                    onChange={e => {
+                      const newPrice = Number(e.target.value);
+                      const total = newPrice * item.quantity;
+                      const vat = total * 0.15;
+                      setOrderItems(orderItems.map((it, i) => i === idx ? { ...it, price: newPrice, total, vat } : it));
+                    }}
+                  />
+                </td>
                 <td>{item.total?.toFixed(2) ?? ''}</td>
                 <td>{item.vat?.toFixed(2) ?? ''}</td>
                 <td>
