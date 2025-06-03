@@ -9,7 +9,7 @@ function App() {
   const [customerName, setCustomerName] = useState('');
   const [customerPhone, setCustomerPhone] = useState('');
   const [excelFile, setExcelFile] = useState<File | null>(null);
-  const [orderItems, setOrderItems] = useState<Array<{ barcode: string; name: string; quantity: number }>>([]);
+  const [orderItems, setOrderItems] = useState<Array<{ barcode: string; name: string; quantity: number; price?: number; total?: number; vat?: number }>>([]);
   const [barcodeInput, setBarcodeInput] = useState('');
   const [itemNameInput, setItemNameInput] = useState('');
   const [quantityInput, setQuantityInput] = useState(1);
@@ -81,12 +81,14 @@ function App() {
     if (result) {
       setShowScanner(false);
       setBarcodeInput(result);
-      // Optionally auto-add if valid
       try {
         const response = await fetch(`${apiBaseUrl}/item/${result}`);
         if (response.ok) {
           const item = await response.json();
-          setOrderItems([...orderItems, { barcode: result, name: item.name, quantity: quantityInput }]);
+          const price = item.price || 0;
+          const total = price * quantityInput;
+          const vat = total * 0.15;
+          setOrderItems([...orderItems, { barcode: result, name: item.name, quantity: quantityInput, price, total, vat }]);
           setBarcodeInput('');
           setItemNameInput('');
           setQuantityInput(1);
@@ -99,8 +101,10 @@ function App() {
     }
   };
 
-  const handleAddItem = (barcode: string, name: string, quantity: number) => {
-    setOrderItems([...orderItems, { barcode, name, quantity }]);
+  const handleAddItem = (barcode: string, name: string, quantity: number, price?: number) => {
+    const total = (price || 0) * quantity;
+    const vat = total * 0.15;
+    setOrderItems([...orderItems, { barcode, name, quantity, price, total, vat }]);
   };
 
   const handleRemoveItem = (index: number) => {
@@ -112,19 +116,20 @@ function App() {
       alert('Please enter your name (Created By) before saving the order.');
       return;
     }
+    // Recalculate totals and VAT before sending
+    const itemsWithTotals = orderItems.map(item => {
+      const price = item.price || 0;
+      const total = price * item.quantity;
+      const vat = total * 0.15;
+      return { ...item, price, total, vat };
+    });
     try {
-      const response = await fetch(`${apiBaseUrl}/save-order`, {
-        method: 'POST',
-        body: new FormData(), // will be replaced below
-      });
-      // We'll build the FormData below
       const formData = new FormData();
       formData.append('customer_name', customerName);
       formData.append('customer_phone', customerPhone);
       formData.append('username', username);
       formData.append('created_by', createdBy);
-      formData.append('items', JSON.stringify(orderItems));
-      // Actually send the request
+      formData.append('items', JSON.stringify(itemsWithTotals));
       const saveResponse = await fetch(`${apiBaseUrl}/save-order`, {
         method: 'POST',
         body: formData,
@@ -160,7 +165,10 @@ function App() {
       const response = await fetch(`${apiBaseUrl}/item/${barcodeInput}`);
       if (response.ok) {
         const item = await response.json();
-        setOrderItems([...orderItems, { barcode: barcodeInput, name: item.name, quantity: quantityInput }]);
+        const price = item.price || 0;
+        const total = price * quantityInput;
+        const vat = total * 0.15;
+        setOrderItems([...orderItems, { barcode: barcodeInput, name: item.name, quantity: quantityInput, price, total, vat }]);
         setBarcodeInput('');
         setItemNameInput('');
         setQuantityInput(1);
@@ -279,6 +287,9 @@ function App() {
               <th>Barcode</th>
               <th>Name</th>
               <th>Quantity</th>
+              <th>Price</th>
+              <th>Total</th>
+              <th>VAT (15%)</th>
               <th>Remove</th>
             </tr>
           </thead>
@@ -295,10 +306,16 @@ function App() {
                     style={{ width: '60px' }}
                     onChange={e => {
                       const newQty = Number(e.target.value);
-                      setOrderItems(orderItems.map((it, i) => i === idx ? { ...it, quantity: newQty } : it));
+                      const price = item.price || 0;
+                      const total = price * newQty;
+                      const vat = total * 0.15;
+                      setOrderItems(orderItems.map((it, i) => i === idx ? { ...it, quantity: newQty, total, vat } : it));
                     }}
                   />
                 </td>
+                <td>{item.price?.toFixed(2) ?? ''}</td>
+                <td>{item.total?.toFixed(2) ?? ''}</td>
+                <td>{item.vat?.toFixed(2) ?? ''}</td>
                 <td>
                   <button onClick={() => handleRemoveItem(idx)}>Remove</button>
                 </td>

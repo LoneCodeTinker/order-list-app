@@ -23,7 +23,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# In-memory inventory (barcode -> {name, ...})
+# In-memory inventory (barcode -> {name, price})
 inventory = {}
 
 UPLOAD_DIR = os.path.join(os.getcwd(), "uploaded_inventory")
@@ -54,9 +54,9 @@ def upload_inventory(file: UploadFile = File(...)):
     ws = wb.active
     inventory.clear()
     for row in ws.iter_rows(min_row=2, values_only=True):
-        barcode, name = row[0], row[1]
+        barcode, name, price = row[0], row[1], row[2] if len(row) > 2 else (None)
         if barcode:
-            inventory[str(barcode)] = {"name": name}
+            inventory[str(barcode)] = {"name": name, "price": price if price is not None else 0.0}
     return {"count": len(inventory), "saved_as": file_path}
 
 @app.get("/latest-inventory")
@@ -69,9 +69,9 @@ def latest_inventory():
     ws = wb.active
     inventory.clear()
     for row in ws.iter_rows(min_row=2, values_only=True):
-        barcode, name = row[0], row[1]
+        barcode, name, price = row[0], row[1], row[2] if len(row) > 2 else (None)
         if barcode:
-            inventory[str(barcode)] = {"name": name}
+            inventory[str(barcode)] = {"name": name, "price": price if price is not None else 0.0}
     return {"count": len(inventory), "filename": os.path.basename(latest_file)}
 
 @app.get("/item/{barcode}")
@@ -84,9 +84,9 @@ def get_item(barcode: str):
     ws = wb.active
     temp_inventory = {}
     for row in ws.iter_rows(min_row=2, values_only=True):
-        barcode_val, name = row[0], row[1]
+        barcode_val, name, price = row[0], row[1], row[2] if len(row) > 2 else (None)
         if barcode_val:
-            temp_inventory[str(barcode_val)] = {"name": name}
+            temp_inventory[str(barcode_val)] = {"name": name, "price": price if price is not None else 0.0}
     item = temp_inventory.get(barcode)
     if item:
         return item
@@ -120,9 +120,27 @@ def save_order(
     ws.append(["Created By", created_by])
     ws.append(["Date", now])
     ws.append([])
-    ws.append(["Barcode", "Name", "Quantity"])
+    ws.append(["Barcode", "Name", "Quantity", "Price", "Total", "VAT (15%)"])
+    order_total = 0.0
+    order_vat = 0.0
     for item in items_list:
-        ws.append([item["barcode"], item["name"], item["quantity"]])
+        price = float(item.get("price", 0.0))
+        quantity = int(item["quantity"])
+        total = price * quantity
+        vat = total * 0.15
+        order_total += total
+        order_vat += vat
+        ws.append([
+            item["barcode"],
+            item["name"],
+            quantity,
+            price,
+            total,
+            vat
+        ])
+    ws.append([])
+    ws.append(["Order Total", order_total])
+    ws.append(["Order VAT (15%)", order_vat])
     # Auto-fit columns
     for col in ws.columns:
         max_length = 0

@@ -124,6 +124,14 @@ th, td {
   background: var(--white);
   color: var(--primary-purple);
 }
+.order-table-section th:nth-child(4),
+.order-table-section td:nth-child(4),
+.order-table-section th:nth-child(5),
+.order-table-section td:nth-child(5),
+.order-table-section th:nth-child(6),
+.order-table-section td:nth-child(6) {
+  text-align: right;
+}
 th, .order-table-section th {
   background: var(--secondary-purple);
   color: var(--primary-purple);
