@@ -146,8 +146,25 @@ function App() {
     }
   };
 
-  const handleBarcodeInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setBarcodeInput(e.target.value);
+  const handleBarcodeInput = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setBarcodeInput(value);
+    setBarcodeError(null);
+    setItemNameInput('');
+    // If barcode is not empty, fetch the item name
+    if (value) {
+      try {
+        const response = await fetch(`${apiBaseUrl}/item/${value}`);
+        if (response.ok) {
+          const item = await response.json();
+          setItemNameInput(item.name || '');
+        } else {
+          setItemNameInput('');
+        }
+      } catch {
+        setItemNameInput('');
+      }
+    }
   };
 
   const handleItemNameInput = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -256,6 +273,7 @@ function App() {
             placeholder="Enter barcode manually"
             value={barcodeInput}
             onChange={handleBarcodeInput}
+            onBlur={handleBarcodeInput}
             style={{ width: '60%', marginRight: '0.5rem' }}
           />
           {barcodeError && (
