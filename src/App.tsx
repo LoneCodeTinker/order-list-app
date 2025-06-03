@@ -278,50 +278,54 @@ function App() {
             )}
           </div>
         )}
-        <div style={{ margin: '1rem 0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-          <label htmlFor="barcode-input" style={{ marginRight: '0.5rem' }}>Barcode:</label>
-          <input
-            id="barcode-input"
-            type="text"
-            placeholder="Enter barcode manually"
-            value={barcodeInput}
-            onChange={handleBarcodeInput}
-            onBlur={handleBarcodeInput}
-            style={{ width: '40%', marginRight: '0.5rem' }}
-          />
+        <div style={{ margin: '1rem 0', display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%' }}>
+            <label htmlFor="barcode-input" style={{ minWidth: 70 }}>Barcode:</label>
+            <input
+              id="barcode-input"
+              type="text"
+              placeholder="Enter barcode manually"
+              value={barcodeInput}
+              onChange={handleBarcodeInput}
+              onBlur={handleBarcodeInput}
+              style={{ flex: 1, minWidth: 120 }}
+            />
+            <label htmlFor="quantity-input" style={{ minWidth: 40 }}>Qty:</label>
+            <input
+              id="quantity-input"
+              type="number"
+              min={1}
+              placeholder="Qty"
+              value={quantityInput}
+              onChange={handleQuantityInput}
+              style={{ width: 70 }}
+            />
+          </div>
+          <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', width: '100%' }}>
+            <label htmlFor="price-input" style={{ minWidth: 50 }}>Price:</label>
+            <input
+              id="price-input"
+              type="number"
+              min={0}
+              step="0.01"
+              placeholder="Price"
+              value={priceInput ?? ''}
+              onChange={handlePriceInput}
+              style={{ width: 90 }}
+            />
+            <input
+              type="text"
+              placeholder="Item name (auto)"
+              value={itemNameInput}
+              onChange={handleItemNameInput}
+              style={{ flex: 1, minWidth: 120 }}
+              disabled
+            />
+            <button onClick={handleAddManualItem} style={{ padding: '0.5rem 1.5rem', marginLeft: 'auto' }}>Add</button>
+          </div>
           {barcodeError && (
             <span style={{ color: 'red', fontSize: '0.9em', marginLeft: '0.5em' }}>{barcodeError}</span>
           )}
-          <input
-            type="text"
-            placeholder="Item name (auto)"
-            value={itemNameInput}
-            onChange={handleItemNameInput}
-            style={{ width: '30%', marginRight: '0.5rem' }}
-            disabled
-          />
-          <label htmlFor="quantity-input" style={{ marginLeft: '0.5rem' }}>Qty:</label>
-          <input
-            id="quantity-input"
-            type="number"
-            min={1}
-            placeholder="Qty"
-            value={quantityInput}
-            onChange={handleQuantityInput}
-            style={{ width: '15%', marginRight: '0.5rem' }}
-          />
-          <label htmlFor="price-input" style={{ marginLeft: '0.5rem' }}>Price:</label>
-          <input
-            id="price-input"
-            type="number"
-            min={0}
-            step="0.01"
-            placeholder="Price"
-            value={priceInput ?? ''}
-            onChange={handlePriceInput}
-            style={{ width: '15%', marginRight: '0.5rem' }}
-          />
-          <button onClick={handleAddManualItem} style={{ padding: '0.5rem 1rem' }}>Add</button>
         </div>
       </div>
       <div className="order-table-section">
