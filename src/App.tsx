@@ -218,7 +218,9 @@ function App() {
 
   return (
     <div className="container">
-      <h2>Order List App</h2>
+      <h2 style={{ color: 'var(--primary-purple)', marginBottom: '1.2rem', fontWeight: 700, letterSpacing: '0.01em', fontSize: '2.1em', textShadow: '0 2px 8px #b8b3c633' }}>
+        <span style={{ fontWeight: 800, letterSpacing: '0.03em' }}>Order List</span> <span style={{ fontWeight: 400, fontSize: '0.7em', color: 'var(--secondary-purple)' }}>App</span>
+      </h2>
       <div className="form-section">
         <input
           type="text"
