@@ -191,20 +191,21 @@ function App() {
     setBarcodeError(null);
     try {
       const response = await fetch(`${apiBaseUrl}/item/${barcodeInput}`);
-      let price = priceInput;
-      let name = '';
       if (response.ok) {
         const item = await response.json();
-        name = item.name;
+        let price = priceInput;
+        let name = item.name;
         if (price === undefined) price = item.price || 0;
+        const total = (price || 0) * quantityInput;
+        const vat = total * 0.15;
+        setOrderItems([...orderItems, { barcode: barcodeInput, name, quantity: quantityInput, price, total, vat }]);
+        setBarcodeInput('');
+        setItemNameInput('');
+        setQuantityInput(1);
+        setPriceInput(undefined);
+      } else {
+        setBarcodeError('Barcode not found in inventory.');
       }
-      const total = (price || 0) * quantityInput;
-      const vat = total * 0.15;
-      setOrderItems([...orderItems, { barcode: barcodeInput, name, quantity: quantityInput, price, total, vat }]);
-      setBarcodeInput('');
-      setItemNameInput('');
-      setQuantityInput(1);
-      setPriceInput(undefined);
     } catch (err) {
       setBarcodeError('Error checking barcode.');
     }
