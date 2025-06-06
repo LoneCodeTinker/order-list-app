@@ -342,13 +342,13 @@ function App() {
         <table>
           <thead>
             <tr>
-              <th>Barcode</th>
-              <th>Name</th>
-              <th>Quantity</th>
-              <th>Price</th>
-              <th>Total</th>
-              <th>VAT (15%)</th>
-              <th>Remove</th>
+              <th style={{ textAlign: 'center' }}>Barcode</th>
+              <th style={{ textAlign: 'center' }}>Name</th>
+              <th style={{ textAlign: 'center' }}>Quantity</th>
+              <th style={{ textAlign: 'center' }}>Price</th>
+              <th style={{ textAlign: 'center' }}>Total</th>
+              <th style={{ textAlign: 'center' }}>VAT (15%)</th>
+              <th style={{ textAlign: 'center' }}>Remove</th>
             </tr>
           </thead>
           <tbody>
@@ -392,28 +392,36 @@ function App() {
                   <button
                     onClick={() => handleRemoveItem(idx)}
                     style={{
-                      background: 'none',
+                      background: 'var(--secondary-purple)',
                       border: 'none',
                       color: 'var(--primary-purple)',
-                      fontSize: '1.3em',
+                      fontSize: '1.2em',
                       fontWeight: 'bold',
                       cursor: 'pointer',
-                      padding: 0,
+                      padding: '2px 8px',
                       lineHeight: 1,
                       width: '32px',
                       height: '32px',
-                      borderRadius: '50%',
-                      transition: 'background 0.18s',
+                      borderRadius: '7px',
+                      boxShadow: 'none',
+                      outline: 'none',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',
+                      transition: 'background 0.18s, color 0.18s',
                     }}
                     title="Remove"
                     aria-label="Remove"
-                    onMouseOver={e => (e.currentTarget.style.background = 'var(--secondary-purple)')}
-                    onMouseOut={e => (e.currentTarget.style.background = 'none')}
+                    onMouseOver={e => {
+                      e.currentTarget.style.background = '#d32f2f';
+                      e.currentTarget.style.color = '#fff';
+                    }}
+                    onMouseOut={e => {
+                      e.currentTarget.style.background = 'var(--secondary-purple)';
+                      e.currentTarget.style.color = 'var(--primary-purple)';
+                    }}
                   >
-                    ×
+                    ❌
                   </button>
                 </td>
               </tr>
