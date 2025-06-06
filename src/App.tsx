@@ -187,8 +187,13 @@ function App() {
   };
 
   const handleAddManualItem = async () => {
-    if (!barcodeInput) return;
+    // Always focus barcode field, even if barcodeInput is empty or not
+    setTimeout(() => {
+      const barcodeField = document.getElementById('barcode-input');
+      if (barcodeField) (barcodeField as HTMLInputElement).focus();
+    }, 0);
     setBarcodeError(null);
+    if (!barcodeInput) return;
     try {
       const response = await fetch(`${apiBaseUrl}/item/${barcodeInput}`);
       if (response.ok) {
