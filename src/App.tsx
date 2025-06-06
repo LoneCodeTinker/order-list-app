@@ -387,7 +387,32 @@ function App() {
                 <td>{item.total?.toFixed(2) ?? ''}</td>
                 <td>{item.vat?.toFixed(2) ?? ''}</td>
                 <td>
-                  <button onClick={() => handleRemoveItem(idx)}>Remove</button>
+                  <button
+                    onClick={() => handleRemoveItem(idx)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: 'var(--primary-purple)',
+                      fontSize: '1.3em',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      padding: 0,
+                      lineHeight: 1,
+                      width: '32px',
+                      height: '32px',
+                      borderRadius: '50%',
+                      transition: 'background 0.18s',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title="Remove"
+                    aria-label="Remove"
+                    onMouseOver={e => (e.currentTarget.style.background = 'var(--secondary-purple)')}
+                    onMouseOut={e => (e.currentTarget.style.background = 'none')}
+                  >
+                    ×
+                  </button>
                 </td>
               </tr>
             ))}
