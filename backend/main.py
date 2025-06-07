@@ -1,12 +1,14 @@
 from fastapi import FastAPI, UploadFile, File, Form
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, FileResponse
 import os
 from dotenv import load_dotenv
 import json
 import openpyxl
+from openpyxl import load_workbook
 from datetime import datetime
 import glob
+import re
 
 load_dotenv()
 
@@ -156,3 +158,106 @@ def save_order(
             cell.alignment = Alignment(vertical="center", horizontal="center")
     wb.save(filepath)
     return {"filename": filename, "path": filepath}
+
+@app.get("/orders/latest")
+def get_latest_orders():
+    order_files = sorted(
+        [f for f in os.listdir(ORDER_SAVE_DIR) if f.endswith('.xlsx') and not f.startswith('~$')],
+        key=lambda x: os.path.getctime(os.path.join(ORDER_SAVE_DIR, x)),
+        reverse=True
+    )[:10]
+    orders = []
+    for filename in order_files:
+        # Example filename: 2025-06-07_15-43-53_Mamoo_user1-created by Talha.xlsx
+        match = re.match(r"(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})_([^_]*)_([^\-]*)-created by (.*)\.xlsx", filename)
+        date, customer, username, created_by = '', '', '', ''
+        if match:
+            date, customer, username, created_by = match.groups()
+        else:
+            date = filename.split('_')[0]
+        # Read order total from file
+        try:
+            wb = load_workbook(os.path.join(ORDER_SAVE_DIR, filename), data_only=True)
+            ws = wb.active
+            order_total = None
+            for row in ws.iter_rows(values_only=True):
+                if row and str(row[0]).strip().lower() == 'order total':
+                    order_total = row[1]
+                    break
+        except Exception:
+            order_total = None
+        orders.append({
+            'filename': filename,
+            'date': date,
+            'customer': customer,
+            'order_total': order_total,
+            'created_by': created_by
+        })
+    return {'orders': orders}
+
+@app.get("/orders/details/{filename}")
+def get_order_details(filename: str):
+    file_path = os.path.join(ORDER_SAVE_DIR, filename)
+    if not os.path.exists(file_path):
+        return JSONResponse(status_code=404, content={"error": "Order file not found."})
+    wb = load_workbook(file_path, data_only=True)
+    ws = wb.active
+    # Find the start of the order table
+    table_start = None
+    for idx, row in enumerate(ws.iter_rows(values_only=True)):
+        if row and 'Barcode' in row:
+            table_start = idx
+            break
+    if table_start is None:
+        return JSONResponse(status_code=400, content={"error": "Order table not found in file."})
+    headers = [cell for cell in ws.iter_rows(min_row=table_start+1, max_row=table_start+1, values_only=True)][0]
+    items = []
+    for row in ws.iter_rows(min_row=table_start+2, values_only=True):
+        if not row or not row[0]:
+            break
+        items.append(dict(zip(headers, row)))
+    return {'headers': headers, 'items': items}
+
+@app.get("/orders/download/{filename}")
+def download_order(filename: str):
+    file_path = os.path.join(ORDER_SAVE_DIR, filename)
+    if not os.path.exists(file_path):
+        return JSONResponse(status_code=404, content={"error": "Order file not found."})
+    return FileResponse(file_path, filename=filename, media_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet')
+
+@app.delete("/orders/delete/{filename}")
+def delete_order(filename: str):
+    file_path = os.path.join(ORDER_SAVE_DIR, filename)
+    if not os.path.exists(file_path):
+        return JSONResponse(status_code=404, content={"error": "Order file not found."})
+    try:
+        os.remove(file_path)
+        return {"success": True, "deleted": filename}
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"error": str(e)})
+
+@app.get("/orders/search")
+def search_orders(customer: str = None, created_by: str = None, date: str = None):
+    order_files = [f for f in os.listdir(ORDER_SAVE_DIR) if f.endswith('.xlsx') and not f.startswith('~$')]
+    results = []
+    for filename in order_files:
+        match = re.match(r"(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})_([^_]*)_([^\-]*)-created by (.*)\.xlsx", filename)
+        file_date, customer_name, username, creator = '', '', '', ''
+        if match:
+            file_date, customer_name, username, creator = match.groups()
+        else:
+            file_date = filename.split('_')[0]
+        # Filter logic
+        if customer and customer.lower() not in customer_name.lower():
+            continue
+        if created_by and created_by.lower() not in creator.lower():
+            continue
+        if date and date not in file_date:
+            continue
+        results.append({
+            'filename': filename,
+            'date': file_date,
+            'customer': customer_name,
+            'created_by': creator
+        })
+    return {'orders': results}
