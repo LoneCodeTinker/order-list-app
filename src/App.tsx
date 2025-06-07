@@ -216,6 +216,77 @@ function App() {
     }
   };
 
+  // --- Order History Section ---
+  const [orderHistory, setOrderHistory] = React.useState<any[]>([]);
+  const [orderHistoryLoading, setOrderHistoryLoading] = React.useState(false);
+  const [orderHistoryPage, setOrderHistoryPage] = React.useState(1);
+  const [orderHistoryPageSize] = React.useState(10);
+  const [orderHistoryTotal, setOrderHistoryTotal] = React.useState(0);
+  const [orderHistorySearch, setOrderHistorySearch] = React.useState({ customer: '', created_by: '', date: '' });
+  const [orderPreview, setOrderPreview] = React.useState<{ headers: string[]; items: any[] } | null>(null);
+  const [orderPreviewFilename, setOrderPreviewFilename] = React.useState<string | null>(null);
+  const [orderHistoryError, setOrderHistoryError] = React.useState<string | null>(null);
+
+  const fetchOrderHistory = React.useCallback(async () => {
+    setOrderHistoryLoading(true);
+    setOrderHistoryError(null);
+    try {
+      // Use search endpoint if any filter is set, else use paginated endpoint
+      const params = [];
+      if (orderHistorySearch.customer) params.push(`customer=${encodeURIComponent(orderHistorySearch.customer)}`);
+      if (orderHistorySearch.created_by) params.push(`created_by=${encodeURIComponent(orderHistorySearch.created_by)}`);
+      if (orderHistorySearch.date) params.push(`date=${encodeURIComponent(orderHistorySearch.date)}`);
+      let url = '';
+      if (params.length > 0) {
+        url = `${apiBaseUrl}/orders/search?${params.join('&')}`;
+      } else {
+        url = `${apiBaseUrl}/orders/page?page=${orderHistoryPage}&page_size=${orderHistoryPageSize}`;
+      }
+      const resp = await fetch(url);
+      if (!resp.ok) throw new Error('Failed to fetch order history');
+      const data = await resp.json();
+      setOrderHistory(data.orders || []);
+      setOrderHistoryTotal(data.total_orders || (data.orders ? data.orders.length : 0));
+    } catch (err: any) {
+      setOrderHistoryError(err.message || 'Error loading order history');
+    } finally {
+      setOrderHistoryLoading(false);
+    }
+  }, [orderHistoryPage, orderHistoryPageSize, orderHistorySearch]);
+
+  React.useEffect(() => {
+    fetchOrderHistory();
+  }, [fetchOrderHistory]);
+
+  const handleOrderPreview = async (filename: string) => {
+    setOrderPreview(null);
+    setOrderPreviewFilename(filename);
+    try {
+      const resp = await fetch(`${apiBaseUrl}/orders/details/${encodeURIComponent(filename)}`);
+      if (!resp.ok) throw new Error('Failed to load order details');
+      const data = await resp.json();
+      setOrderPreview(data);
+    } catch {
+      setOrderPreview(null);
+    }
+  };
+
+  const handleOrderDownload = (filename: string) => {
+    window.open(`${apiBaseUrl}/orders/download/${encodeURIComponent(filename)}`, '_blank');
+  };
+
+  const handleOrderDelete = async (filename: string) => {
+    if (!window.confirm('Are you sure you want to delete this order?')) return;
+    try {
+      const resp = await fetch(`${apiBaseUrl}/orders/delete/${encodeURIComponent(filename)}`, { method: 'DELETE' });
+      if (!resp.ok) throw new Error('Failed to delete order');
+      fetchOrderHistory();
+      if (orderPreviewFilename === filename) setOrderPreview(null);
+    } catch {
+      alert('Error deleting order.');
+    }
+  };
+
   return (
     <div className="container">
       <h2 style={{ color: 'var(--primary-purple)', marginBottom: '1.2rem', fontWeight: 700, letterSpacing: '0.01em', fontSize: '2.1em', textShadow: '0 2px 8px #b8b3c633' }}>
@@ -432,6 +503,77 @@ function App() {
       <button className="save-btn" onClick={handleSaveOrder} disabled={orderItems.length === 0}>
         Save Order
       </button>
+      {/* Order History Section */}
+      <div className="order-table-section" style={{ marginTop: 32 }}>
+        <h3 style={{ textAlign: 'center', marginBottom: 12 }}>Order History</h3>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 12, justifyContent: 'center' }}>
+          <input type="text" placeholder="Customer" value={orderHistorySearch.customer} onChange={e => setOrderHistorySearch(s => ({ ...s, customer: e.target.value }))} style={{ minWidth: 100 }} />
+          <input type="text" placeholder="Created By" value={orderHistorySearch.created_by} onChange={e => setOrderHistorySearch(s => ({ ...s, created_by: e.target.value }))} style={{ minWidth: 100 }} />
+          <input type="date" placeholder="Date" value={orderHistorySearch.date} onChange={e => setOrderHistorySearch(s => ({ ...s, date: e.target.value }))} style={{ minWidth: 120 }} />
+          <button onClick={() => { setOrderHistoryPage(1); fetchOrderHistory(); }}>Search</button>
+          <button onClick={() => { setOrderHistorySearch({ customer: '', created_by: '', date: '' }); setOrderHistoryPage(1); }}>Clear</button>
+          <button onClick={() => window.open('/orders', '_blank')}>Show More</button>
+        </div>
+        {orderHistoryLoading ? (
+          <div>Loading...</div>
+        ) : orderHistoryError ? (
+          <div className="error">{orderHistoryError}</div>
+        ) : (
+          <table>
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Customer</th>
+                <th>Order Total</th>
+                <th>Created By</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {orderHistory.length === 0 ? (
+                <tr><td colSpan={5} style={{ textAlign: 'center' }}>No orders found.</td></tr>
+              ) : orderHistory.map((order, idx) => (
+                <tr key={order.filename} style={{ cursor: 'pointer', background: orderPreviewFilename === order.filename ? '#f0f0ff' : undefined }}>
+                  <td>{order.date}</td>
+                  <td>{order.customer}</td>
+                  <td>{order.order_total !== undefined && order.order_total !== null ? order.order_total.toFixed(2) : ''}</td>
+                  <td>{order.created_by}</td>
+                  <td style={{ display: 'flex', gap: 6 }}>
+                    <button onClick={() => handleOrderPreview(order.filename)} style={{ padding: '2px 8px', fontSize: '0.95em' }}>Preview</button>
+                    <button onClick={() => handleOrderDownload(order.filename)} style={{ padding: '2px 8px', fontSize: '0.95em' }}>Download</button>
+                    <button onClick={() => handleOrderDelete(order.filename)} style={{ padding: '2px 8px', fontSize: '0.95em', color: '#d32f2f' }}>Delete</button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        )}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 12, marginTop: 10 }}>
+          <button disabled={orderHistoryPage === 1} onClick={() => setOrderHistoryPage(p => Math.max(1, p - 1))}>Prev</button>
+          <span>Page {orderHistoryPage}</span>
+          <button disabled={orderHistory.length < orderHistoryPageSize} onClick={() => setOrderHistoryPage(p => p + 1)}>Next</button>
+        </div>
+        {orderPreview && (
+          <div style={{ marginTop: 18, background: '#f8f8ff', border: '1px solid #ccc', borderRadius: 8, padding: 12 }}>
+            <h4>Order Preview: {orderPreviewFilename}</h4>
+            <table style={{ width: '100%', marginTop: 8 }}>
+              <thead>
+                <tr>
+                  {orderPreview.headers.map(h => <th key={h}>{h}</th>)}
+                </tr>
+              </thead>
+              <tbody>
+                {orderPreview.items.map((row, i) => (
+                  <tr key={i}>
+                    {orderPreview.headers.map(h => <td key={h}>{row[h]}</td>)}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+            <button onClick={() => setOrderPreview(null)} style={{ marginTop: 8 }}>Close Preview</button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
