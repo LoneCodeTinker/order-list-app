@@ -33,4 +33,9 @@ systemctl restart nginx
 # Deploy and run the app
 npm install
 npm run build
-npm run start:all
+npm install -g pm2
+pm2 start npm --name "orderapp" -- run start:prod
+pm2 save
+pm2 startup
+# if you want to run the app in development mode, use the following command instead
+# npm run start:all
