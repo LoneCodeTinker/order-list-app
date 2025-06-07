@@ -261,3 +261,65 @@ def search_orders(customer: str = None, created_by: str = None, date: str = None
             'created_by': creator
         })
     return {'orders': results}
+
+@app.get("/orders/page")
+def get_orders_page(page: int = 1, page_size: int = 10):
+    order_files = sorted(
+        [f for f in os.listdir(ORDER_SAVE_DIR) if f.endswith('.xlsx') and not f.startswith('~$')],
+        key=lambda x: os.path.getctime(os.path.join(ORDER_SAVE_DIR, x)),
+        reverse=True
+    )
+    total_orders = len(order_files)
+    start = (page - 1) * page_size
+    end = start + page_size
+    paged_files = order_files[start:end]
+    orders = []
+    for filename in paged_files:
+        match = re.match(r"(\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})_([^_]*)_([^\-]*)-created by (.*)\.xlsx", filename)
+        date, customer, username, created_by = '', '', '', ''
+        if match:
+            date, customer, username, created_by = match.groups()
+        else:
+            date = filename.split('_')[0]
+        try:
+            wb = load_workbook(os.path.join(ORDER_SAVE_DIR, filename), data_only=True)
+            ws = wb.active
+            order_total = None
+            for row in ws.iter_rows(values_only=True):
+                if row and str(row[0]).strip().lower() == 'order total':
+                    order_total = row[1]
+                    break
+        except Exception:
+            order_total = None
+        orders.append({
+            'filename': filename,
+            'date': date,
+            'customer': customer,
+            'order_total': order_total,
+            'created_by': created_by
+        })
+    return {'orders': orders, 'total_orders': total_orders, 'page': page, 'page_size': page_size}
+
+@app.get("/orders/count")
+def get_orders_count():
+    order_files = [f for f in os.listdir(ORDER_SAVE_DIR) if f.endswith('.xlsx') and not f.startswith('~$')]
+    return {'count': len(order_files)}
+
+@app.get("/errors/log")
+def get_error_log():
+    log_dir = os.path.join(os.getcwd(), 'errors_log')
+    log_files = sorted(
+        [f for f in os.listdir(log_dir) if f.endswith('.txt')],
+        key=lambda x: os.path.getctime(os.path.join(log_dir, x)),
+        reverse=True
+    )
+    logs = []
+    for filename in log_files:
+        file_path = os.path.join(log_dir, filename)
+        try:
+            with open(file_path, 'r', encoding='utf-8') as f:
+                content = f.read()
+            logs.append({'filename': filename, 'content': content})
+        except Exception as e:
+            logs.append({'filename': filename, 'content': f'Error reading file: {e}'})
+    return {'logs': logs}
