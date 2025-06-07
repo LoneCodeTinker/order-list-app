@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import BarcodeScannerComponent from 'react-qr-barcode-scanner';
 import './App.css';
+import PrevIcon from './assets/prev-icon.svg';
+import DLIcon from './assets/DL-icon.svg';
+import DelIcon from './assets/del-icon.svg';
 
 // Use relative API path for HTTPS proxy/tunnel compatibility
 const apiBaseUrl = '/api';
@@ -21,6 +24,13 @@ function App() {
   const [facingMode, setFacingMode] = useState<'environment' | 'user'>('environment');
   const [latestInventory, setLatestInventory] = useState<string | null>(null);
   const [barcodeError, setBarcodeError] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
+  // --- Toast/Inline Message State ---
+  const [toast, setToast] = React.useState<{ type: 'success' | 'error' | 'info'; message: string } | null>(null);
+  const showToast = (type: 'success' | 'error' | 'info', message: string) => {
+    setToast({ type, message });
+    setTimeout(() => setToast(null), 3000);
+  };
   // Placeholder for username, in real app get from auth
   const username = 'user1';
 
@@ -63,12 +73,12 @@ function App() {
         console.log('Upload inventory response:', raw);
         if (response.ok) {
           const data = await response.json();
-          alert('Inventory uploaded. You can now scan or enter barcodes.');
+          showToast('success', 'Inventory uploaded. You can now scan or enter barcodes.');
         } else {
-          alert('Failed to upload inventory.');
+          showToast('error', 'Failed to upload inventory.');
         }
       } catch (err) {
-        alert('Error uploading inventory.');
+        showToast('error', 'Error uploading inventory.');
       }
     }
   };
@@ -116,9 +126,10 @@ function App() {
 
   const handleSaveOrder = async () => {
     if (!createdBy) {
-      alert('Please enter your name (Created By) before saving the order.');
+      showToast('error', 'Please enter your name (Created By) before saving the order.');
       return;
     }
+    setSavingOrder(true);
     // Recalculate totals and VAT before sending
     const itemsWithTotals = orderItems.map(item => {
       const price = item.price || 0;
@@ -139,13 +150,17 @@ function App() {
       });
       if (saveResponse.ok) {
         const data = await saveResponse.json();
-        alert(`Order saved as ${data.filename}`);
+        showToast('success', `Order saved as ${data.filename}`);
         setOrderItems([]);
+        // Optionally, highlight the most recent order in history
+        setTimeout(() => fetchOrderHistory(), 500);
       } else {
-        alert('Failed to save order.');
+        showToast('error', 'Failed to save order.');
       }
     } catch (err) {
-      alert('Error saving order.');
+      showToast('error', 'Error saving order.');
+    } finally {
+      setSavingOrder(false);
     }
   };
 
@@ -280,6 +295,7 @@ function App() {
     try {
       const resp = await fetch(`${apiBaseUrl}/orders/delete/${encodeURIComponent(filename)}`, { method: 'DELETE' });
       if (!resp.ok) throw new Error('Failed to delete order');
+      showToast('success', 'Order deleted.');
       fetchOrderHistory();
       if (orderPreviewFilename === filename) setOrderPreview(null);
     } catch {
@@ -287,8 +303,35 @@ function App() {
     }
   };
 
+  // Utility to format date (remove time)
+  const formatOrderDate = (dateStr: string) => {
+    // Accepts 'YYYY-MM-DD_HH-MM-SS' or just 'YYYY-MM-DD'
+    if (!dateStr) return '';
+    const match = dateStr.match(/(\d{4}-\d{2}-\d{2})/);
+    return match ? match[1] : dateStr;
+  };
+
   return (
     <div className="container">
+      {toast && (
+        <div style={{
+          position: 'fixed',
+          top: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: toast.type === 'success' ? '#4caf50' : toast.type === 'error' ? '#d32f2f' : '#333',
+          color: '#fff',
+          padding: '0.7em 1.5em',
+          borderRadius: 8,
+          boxShadow: '0 2px 8px rgba(0,0,0,0.12)',
+          zIndex: 9999,
+          fontSize: '1.1em',
+          fontWeight: 500,
+          letterSpacing: '0.01em',
+        }}>
+          {toast.message}
+        </div>
+      )}
       <h2 style={{ color: 'var(--primary-purple)', marginBottom: '1.2rem', fontWeight: 700, letterSpacing: '0.01em', fontSize: '2.1em', textShadow: '0 2px 8px #b8b3c633' }}>
         <span style={{ fontWeight: 800, letterSpacing: '0.03em' }}>Order List</span> <span style={{ fontWeight: 400, fontSize: '0.7em', color: 'var(--secondary-purple)' }}>App</span>
       </h2>
@@ -500,8 +543,8 @@ function App() {
           </tbody>
         </table>
       </div>
-      <button className="save-btn" onClick={handleSaveOrder} disabled={orderItems.length === 0}>
-        Save Order
+      <button className="save-btn" onClick={handleSaveOrder} disabled={orderItems.length === 0 || savingOrder}>
+        {savingOrder ? 'Saving...' : 'Save Order'}
       </button>
       {/* Order History Section */}
       <div className="order-table-section" style={{ marginTop: 32 }}>
@@ -532,16 +575,22 @@ function App() {
             <tbody>
               {orderHistory.length === 0 ? (
                 <tr><td colSpan={5} style={{ textAlign: 'center' }}>No orders found.</td></tr>
-              ) : orderHistory.map((order, idx) => (
+              ) : orderHistory.map((order) => (
                 <tr key={order.filename} style={{ cursor: 'pointer', background: orderPreviewFilename === order.filename ? '#f0f0ff' : undefined }}>
-                  <td>{order.date}</td>
+                  <td>{formatOrderDate(order.date)}</td>
                   <td>{order.customer}</td>
                   <td>{order.order_total !== undefined && order.order_total !== null ? order.order_total.toFixed(2) : ''}</td>
                   <td>{order.created_by}</td>
                   <td style={{ display: 'flex', gap: 6 }}>
-                    <button onClick={() => handleOrderPreview(order.filename)} style={{ padding: '2px 8px', fontSize: '0.95em' }}>Preview</button>
-                    <button onClick={() => handleOrderDownload(order.filename)} style={{ padding: '2px 8px', fontSize: '0.95em' }}>Download</button>
-                    <button onClick={() => handleOrderDelete(order.filename)} style={{ padding: '2px 8px', fontSize: '0.95em', color: '#d32f2f' }}>Delete</button>
+                    <button onClick={() => handleOrderPreview(order.filename)} title="Preview" style={{ padding: '2px 8px', fontSize: '1.2em', background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', alignItems: 'center' }}>
+                      <img src={PrevIcon} alt="Preview" style={{ width: 22, height: 22, display: 'block' }} />
+                    </button>
+                    <button onClick={() => handleOrderDownload(order.filename)} title="Download" style={{ padding: '2px 8px', fontSize: '1.2em', background: 'none', border: 'none', cursor: 'pointer', color: '#444', display: 'flex', alignItems: 'center' }}>
+                      <img src={DLIcon} alt="Download" style={{ width: 22, height: 22, display: 'block' }} />
+                    </button>
+                    <button onClick={() => handleOrderDelete(order.filename)} title="Delete" style={{ padding: '2px 8px', fontSize: '1.2em', background: 'none', border: 'none', color: '#d32f2f', cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
+                      <img src={DelIcon} alt="Delete" style={{ width: 22, height: 22, display: 'block' }} />
+                    </button>
                   </td>
                 </tr>
               ))}
