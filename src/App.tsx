@@ -116,7 +116,7 @@ function App() {
 
   const handleAddItem = (barcode: string, name: string, quantity: number, price?: number) => {
     const total = (price || 0) * quantity;
-    const vat = total * 0.15;
+    const vat = Number((total * 0.15).toFixed(2));
     setOrderItems([...orderItems, { barcode, name, quantity, price, total, vat }]);
   };
 
@@ -134,7 +134,7 @@ function App() {
     const itemsWithTotals = orderItems.map(item => {
       const price = item.price || 0;
       const total = price * item.quantity;
-      const vat = total * 0.15;
+      const vat = Number((total * 0.15).toFixed(2));
       return { ...item, price, total, vat };
     });
     try {
@@ -464,13 +464,13 @@ function App() {
         <table>
           <thead>
             <tr>
-              <th style={{ textAlign: 'center' }}>Barcode</th>
-              <th style={{ textAlign: 'center' }}>Name</th>
-              <th style={{ textAlign: 'center' }}>Quantity</th>
-              <th style={{ textAlign: 'center' }}>Price</th>
-              <th style={{ textAlign: 'center' }}>Total</th>
-              <th style={{ textAlign: 'center' }}>VAT (15%)</th>
-              <th style={{ textAlign: 'center' }}>Remove</th>
+              <th style={{ textAlign: 'center' }} title="Product barcode">Barcode</th>
+              <th style={{ textAlign: 'center' }} title="Product name">Name</th>
+              <th style={{ textAlign: 'center' }} title="Quantity ordered">Quantity</th>
+              <th style={{ textAlign: 'center' }} title="Unit price">Price</th>
+              <th style={{ textAlign: 'center' }} title="Total price (Qty × Price)">Total</th>
+              <th style={{ textAlign: 'center' }} title="VAT (15%)">VAT (15%)</th>
+              <th style={{ textAlign: 'center' }} title="Remove item">Remove</th>
             </tr>
           </thead>
           <tbody>
@@ -532,8 +532,8 @@ function App() {
                       justifyContent: 'center',
                       transition: 'background 0.18s, color 0.18s',
                     }}
-                    title="Remove"
-                    aria-label="Remove"
+                    title="Remove item"
+                    aria-label="Remove item"
                     onMouseOver={e => {
                       e.currentTarget.style.background = '#d32f2f';
                       e.currentTarget.style.color = '#fff';
@@ -543,7 +543,7 @@ function App() {
                       e.currentTarget.style.color = 'var(--primary-purple)';
                     }}
                   >
-                    ❌
+                    <img src={DelIcon} alt="Remove" style={{ width: 22, height: 22, display: 'block' }} />
                   </button>
                 </td>
               </tr>
@@ -563,10 +563,17 @@ function App() {
           <input type="date" placeholder="Date" value={orderHistorySearch.date} onChange={e => setOrderHistorySearch(s => ({ ...s, date: e.target.value }))} style={{ minWidth: 120 }} />
           <button onClick={() => { setOrderHistoryPage(1); fetchOrderHistory(); }}>Search</button>
           <button onClick={() => { setOrderHistorySearch({ customer: '', created_by: '', date: '' }); setOrderHistoryPage(1); }}>Clear</button>
-          <button onClick={() => window.open('/orders', '_blank')}>Show More</button>
         </div>
         {orderHistoryLoading ? (
-          <div>Loading...</div>
+          <tbody>
+            {[...Array(orderHistoryPageSize)].map((_, idx) => (
+              <tr key={idx}>
+                <td colSpan={5} style={{ padding: '1em 0', background: '#f6f6fa' }}>
+                  <div style={{ height: 18, width: '80%', margin: '0 auto', background: '#e0e0e0', borderRadius: 4, animation: 'skeleton-loading 1.2s infinite linear alternate' }} />
+                </td>
+              </tr>
+            ))}
+          </tbody>
         ) : orderHistoryError ? (
           <div className="error">{orderHistoryError}</div>
         ) : (
@@ -611,23 +618,56 @@ function App() {
           <button disabled={orderHistory.length < orderHistoryPageSize} onClick={() => setOrderHistoryPage(p => p + 1)}>Next</button>
         </div>
         {orderPreview && (
-          <div style={{ marginTop: 18, background: '#f8f8ff', border: '1px solid #ccc', borderRadius: 8, padding: 12 }}>
-            <h4>Order Preview: {orderPreviewFilename}</h4>
-            <table style={{ width: '100%', marginTop: 8 }}>
-              <thead>
-                <tr>
-                  {orderPreview.headers.map(h => <th key={h}>{h}</th>)}
-                </tr>
-              </thead>
-              <tbody>
-                {orderPreview.items.map((row, i) => (
-                  <tr key={i}>
-                    {orderPreview.headers.map(h => <td key={h}>{row[h]}</td>)}
+          <div className="order-preview-modal" style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(30, 30, 60, 0.45)',
+            zIndex: 10000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}>
+            <div style={{
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 4px 32px #0002',
+              padding: 24,
+              minWidth: 320,
+              maxWidth: '90vw',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              position: 'relative',
+            }}>
+              <button onClick={() => setOrderPreview(null)} style={{
+                position: 'absolute',
+                top: 10,
+                right: 10,
+                background: 'none',
+                border: 'none',
+                fontSize: 22,
+                color: '#d32f2f',
+                cursor: 'pointer',
+                fontWeight: 700,
+              }} title="Close Preview" aria-label="Close Preview">×</button>
+              <h4 style={{ marginTop: 0 }}>Order Preview: {orderPreviewFilename}</h4>
+              <table style={{ width: '100%', marginTop: 8 }}>
+                <thead>
+                  <tr>
+                    {orderPreview.headers.map(h => <th key={h}>{h}</th>)}
                   </tr>
-                ))}
-              </tbody>
-            </table>
-            <button onClick={() => setOrderPreview(null)} style={{ marginTop: 8 }}>Close Preview</button>
+                </thead>
+                <tbody>
+                  {orderPreview.items.map((row, i) => (
+                    <tr key={i}>
+                      {orderPreview.headers.map(h => <td key={h}>{row[h]}</td>)}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
         )}
       </div>

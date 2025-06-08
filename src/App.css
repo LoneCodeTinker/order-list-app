@@ -149,17 +149,40 @@ th, .order-table-section th {
   font-size: 0.98em;
 }
 
+/* Skeleton loading animation */
+@keyframes skeleton-loading {
+  0% { background-color: #e0e0e0; }
+  100% { background-color: #f6f6fa; }
+}
+
 /* Responsive adjustments */
 @media (max-width: 600px) {
-  table, th, td {
-    font-size: 0.95rem;
-    padding: 0.4em;
+  .order-table-section table {
+    font-size: 0.95em;
   }
-  input, select, textarea, button {
-    font-size: 1rem;
-    padding: 0.45em 0.6em;
+  .order-table-section th, .order-table-section td {
+    padding: 0.4em 0.3em;
   }
-  .container {
-    padding: 0.5rem;
+  .order-table-section td button {
+    min-width: 32px;
+    min-height: 32px;
+    font-size: 1.2em;
+  }
+  .order-table-section td img {
+    width: 22px;
+    height: 22px;
+  }
+  .order-table-section {
+    overflow-x: auto;
+  }
+  .order-table-section table {
+    min-width: 540px;
+  }
+  .form-section input, .scan-section input, .scan-section button {
+    font-size: 1.1em;
+    min-height: 36px;
+  }
+  .scan-section label {
+    font-size: 1em;
   }
 }
