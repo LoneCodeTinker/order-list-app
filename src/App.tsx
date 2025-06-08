@@ -431,11 +431,19 @@ function App() {
               id="price-input"
               type="number"
               min={0}
-              step="0.01"
+              step={0.25}
               placeholder="Price"
-              value={priceInput ?? ''}
+              value={priceInput !== undefined && priceInput !== null ? priceInput.toFixed(2) : ''}
               onChange={handlePriceInput}
               style={{ width: 90 }}
+              onBlur={e => {
+                // Snap to nearest 0.25 and two decimals on blur
+                let val = parseFloat(e.target.value);
+                if (!isNaN(val)) {
+                  val = Math.round(val * 4) / 4;
+                  setPriceInput(Number(val.toFixed(2)));
+                }
+              }}
             />
             <input
               type="text"
@@ -500,8 +508,8 @@ function App() {
                     }}
                   />
                 </td>
-                <td>{item.total?.toFixed(2) ?? ''}</td>
-                <td>{item.vat?.toFixed(2) ?? ''}</td>
+                <td>{item.total !== undefined && item.total !== null ? item.total.toFixed(2) : ''}</td>
+                <td>{item.vat !== undefined && item.vat !== null ? item.vat.toFixed(2) : ''}</td>
                 <td>
                   <button
                     onClick={() => handleRemoveItem(idx)}
