@@ -16,7 +16,7 @@ function App() {
   const [barcodeInput, setBarcodeInput] = useState('');
   const [itemNameInput, setItemNameInput] = useState('');
   const [quantityInput, setQuantityInput] = useState(1);
-  const [priceInput, setPriceInput] = useState<number | undefined>(undefined);
+  const [priceInput, setPriceInput] = useState<string>('');
   const [createdBy, setCreatedBy] = useState('');
   const [inventory, setInventory] = useState<{ [barcode: string]: { name: string } }>({});
   const [showScanner, setShowScanner] = useState(false);
@@ -99,16 +99,16 @@ function App() {
         if (response.ok) {
           const item = await response.json();
           setItemNameInput(item.name || '');
-          setPriceInput(item.price ?? 0);
+          setPriceInput(item.price !== undefined && item.price !== null ? String(item.price) : '');
           setQuantityInput(1); // Reset to 1 for new scan
         } else {
           setItemNameInput('');
-          setPriceInput(undefined);
+          setPriceInput('');
           setBarcodeError('Barcode not found in inventory.');
         }
       } catch (err) {
         setItemNameInput('');
-        setPriceInput(undefined);
+        setPriceInput('');
         setBarcodeError('Error checking barcode.');
       }
     }
@@ -169,7 +169,7 @@ function App() {
     setBarcodeInput(value);
     setBarcodeError(null);
     setItemNameInput('');
-    setPriceInput(undefined);
+    setPriceInput('');
     // If barcode is not empty, fetch the item name and price
     if (value) {
       try {
@@ -177,14 +177,14 @@ function App() {
         if (response.ok) {
           const item = await response.json();
           setItemNameInput(item.name || '');
-          setPriceInput(item.price ?? 0);
+          setPriceInput(item.price !== undefined && item.price !== null ? String(item.price) : '');
         } else {
           setItemNameInput('');
-          setPriceInput(undefined);
+          setPriceInput('');
         }
       } catch {
         setItemNameInput('');
-        setPriceInput(undefined);
+        setPriceInput('');
       }
     }
   };
@@ -198,7 +198,7 @@ function App() {
   };
 
   const handlePriceInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setPriceInput(Number(e.target.value));
+    setPriceInput(e.target.value);
   };
 
   const handleAddManualItem = async () => {
@@ -213,16 +213,16 @@ function App() {
       const response = await fetch(`${apiBaseUrl}/item/${barcodeInput}`);
       if (response.ok) {
         const item = await response.json();
-        let price = priceInput;
+        let price = priceInput !== '' ? parseFloat(priceInput) : undefined;
         let name = item.name;
-        if (price === undefined) price = item.price || 0;
+        if (price === undefined || isNaN(price)) price = item.price || 0;
         const total = (price || 0) * quantityInput;
         const vat = total * 0.15;
         setOrderItems([...orderItems, { barcode: barcodeInput, name, quantity: quantityInput, price, total, vat }]);
         setBarcodeInput('');
         setItemNameInput('');
         setQuantityInput(1);
-        setPriceInput(undefined);
+        setPriceInput('');
       } else {
         setBarcodeError('Barcode not found in inventory.');
       }
@@ -433,15 +433,16 @@ function App() {
               min={0}
               step={0.25}
               placeholder="Price"
-              value={priceInput !== undefined && priceInput !== null ? priceInput.toFixed(2) : ''}
+              value={priceInput}
               onChange={handlePriceInput}
               style={{ width: 90 }}
               onBlur={e => {
-                // Snap to nearest 0.25 and two decimals on blur
                 let val = parseFloat(e.target.value);
                 if (!isNaN(val)) {
                   val = Math.round(val * 4) / 4;
-                  setPriceInput(Number(val.toFixed(2)));
+                  setPriceInput(val.toFixed(2));
+                } else {
+                  setPriceInput('');
                 }
               }}
             />
