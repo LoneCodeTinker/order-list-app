@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import BarcodeScannerComponent from 'react-qr-barcode-scanner';
 import './App.css';
 import PrevIcon from './assets/prev-icon.svg';
@@ -201,12 +201,11 @@ function App() {
     setPriceInput(e.target.value);
   };
 
+  const barcodeInputRef = useRef<HTMLInputElement>(null);
+
   const handleAddManualItem = async () => {
-    // Always focus barcode field, even if barcodeInput is empty or not
-    setTimeout(() => {
-      const barcodeField = document.getElementById('barcode-input');
-      if (barcodeField) (barcodeField as HTMLInputElement).focus();
-    }, 0);
+    // Always focus barcode field immediately on button click (for mobile/desktop)
+    barcodeInputRef.current?.focus();
     setBarcodeError(null);
     if (!barcodeInput) return;
     try {
@@ -223,11 +222,17 @@ function App() {
         setItemNameInput('');
         setQuantityInput(1);
         setPriceInput('');
+        // Optionally, focus again after state updates for desktop
+        setTimeout(() => barcodeInputRef.current?.focus(), 0);
       } else {
         setBarcodeError('Barcode not found in inventory.');
+        // Optionally, focus again for desktop
+        setTimeout(() => barcodeInputRef.current?.focus(), 0);
       }
     } catch (err) {
       setBarcodeError('Error checking barcode.');
+      // Optionally, focus again for desktop
+      setTimeout(() => barcodeInputRef.current?.focus(), 0);
     }
   };
 
@@ -413,6 +418,7 @@ function App() {
               onChange={handleBarcodeInput}
               onBlur={handleBarcodeInput}
               style={{ flex: 1, minWidth: 120 }}
+              ref={barcodeInputRef}
             />
             <label htmlFor="quantity-input" style={{ minWidth: 40 }}>Qty:</label>
             <input
