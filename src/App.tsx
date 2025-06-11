@@ -202,12 +202,14 @@ function App() {
   };
 
   const barcodeInputRef = useRef<HTMLInputElement>(null);
+  const [addingItem, setAddingItem] = useState(false);
 
   const handleAddManualItem = async () => {
     // Always focus barcode field immediately on button click (for mobile/desktop)
     barcodeInputRef.current?.focus();
     setBarcodeError(null);
     if (!barcodeInput) return;
+    setAddingItem(true);
     try {
       const response = await fetch(`${apiBaseUrl}/item/${barcodeInput}`);
       if (response.ok) {
@@ -233,6 +235,8 @@ function App() {
       setBarcodeError('Error checking barcode.');
       // Optionally, focus again for desktop
       setTimeout(() => barcodeInputRef.current?.focus(), 0);
+    } finally {
+      setAddingItem(false);
     }
   };
 
@@ -241,7 +245,6 @@ function App() {
   const [orderHistoryLoading, setOrderHistoryLoading] = React.useState(false);
   const [orderHistoryPage, setOrderHistoryPage] = React.useState(1);
   const [orderHistoryPageSize] = React.useState(10);
-  const [orderHistoryTotal, setOrderHistoryTotal] = React.useState(0);
   const [orderHistorySearch, setOrderHistorySearch] = React.useState({ customer: '', created_by: '', date: '' });
   const [orderPreview, setOrderPreview] = React.useState<{ headers: string[]; items: any[] } | null>(null);
   const [orderPreviewFilename, setOrderPreviewFilename] = React.useState<string | null>(null);
@@ -266,7 +269,6 @@ function App() {
       if (!resp.ok) throw new Error('Failed to fetch order history');
       const data = await resp.json();
       setOrderHistory(data.orders || []);
-      setOrderHistoryTotal(data.total_orders || (data.orders ? data.orders.length : 0));
     } catch (err: any) {
       setOrderHistoryError(err.message || 'Error loading order history');
     } finally {
@@ -460,7 +462,9 @@ function App() {
               style={{ flex: 1, minWidth: 120 }}
               disabled
             />
-            <button onClick={handleAddManualItem} style={{ padding: '0.5rem 1.5rem', marginLeft: 'auto' }}>Add</button>
+            <button onClick={handleAddManualItem} style={{ padding: '0.5rem 1.5rem', marginLeft: 'auto' }} disabled={addingItem}>
+              {addingItem ? 'Adding...' : 'Add'}
+            </button>
           </div>
           {barcodeError && (
             <span style={{ color: 'red', fontSize: '0.9em', marginLeft: '0.5em' }}>{barcodeError}</span>
@@ -636,17 +640,24 @@ function App() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            padding: 0,
           }}>
             <div style={{
               background: '#fff',
               borderRadius: 12,
               boxShadow: '0 4px 32px #0002',
-              padding: 24,
-              minWidth: 320,
-              maxWidth: '90vw',
+              padding: 12,
+              minWidth: 0,
+              width: '95vw',
+              maxWidth: 480,
               maxHeight: '90vh',
               overflow: 'auto',
               position: 'relative',
+              margin: '0 auto',
+              top: 0,
+              left: 0,
+              right: 0,
+              bottom: 0,
             }}>
               <button onClick={() => setOrderPreview(null)} style={{
                 position: 'absolute',
