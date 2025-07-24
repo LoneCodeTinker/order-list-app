@@ -90,44 +90,73 @@ export default tseslint.config({
 
 The following steps automate the setup of the Order List App on a fresh Ubuntu server, including nginx reverse proxy, SSL certificates, Python venv, and app deployment. Run these as root or with sudo:
 
-```sh
-# Install nginx reverse proxy server
-apt install nginx
+1. **Edit the `.env` file** to set your server names, hostnames, local IP, backend and frontend ports, and other config variables. Example:
+   ```ini
+   # .env
+   BACKEND_PORT=8000
+   FRONTEND_PORT=5173
+   LOCAL_IP=192.168.1.61
+   HOSTNAME=$(hostname)
+   SERVER_NAMES="order.mrmemon.uk 192.168.1.61 $(hostname) localhost 127.0.0.1 ::1"
+   # ...other variables...
+   ```
 
-# Install mkcert and generate SSL certificates for HTTPS (replace IP/domain as needed)
-mkcert -install
-mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem order.mrmemon.uk 192.168.1.61 $(hostname) localhost 127.0.0.1 ::1
+2. **Install nginx reverse proxy server**
+   ```sh
+   apt install nginx
+   ```
 
-# Install npm
-apt install npm
+3. **Install mkcert and generate SSL certificates for HTTPS**
+   - Use the server names from your `.env` file:
+   ```sh
+   mkcert -install
+   mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem $(echo $SERVER_NAMES)
+   ```
+   - If running from a shell that does not support `$SERVER_NAMES`, manually copy the value from `.env`.
 
-# Install python venv
-apt install python3-venv
+4. **Install npm**
+   ```sh
+   apt install npm
+   ```
 
-# Clone the app from GitHub
-cd ~
-git clone https://github.com/LoneCodeTinker/order-list-app.git orderapp
-cd orderapp/
+5. **Install python venv**
+   ```sh
+   apt install python3-venv
+   ```
 
-# Copy nginx config and enable site
-cp nginxConfig /etc/nginx/sites-available/orderapp
-ln -s /etc/nginx/sites-available/orderapp /etc/nginx/sites-enabled/
+6. **Clone the app from GitHub**
+   ```sh
+   cd ~
+   git clone https://github.com/LoneCodeTinker/order-list-app.git orderapp
+   cd orderapp/
+   ```
 
-# Verify config and restart nginx
-nginx -t
-systemctl restart nginx
+7. **Copy nginx config and enable site**
+   ```sh
+   cp nginxConfig /etc/nginx/sites-available/orderapp
+   ln -s /etc/nginx/sites-available/orderapp /etc/nginx/sites-enabled/
+   ```
 
-# (Optional) Create Python venv if needed
-# python3 -m venv venv
+8. **Verify config and restart nginx**
+   ```sh
+   nginx -t
+   systemctl restart nginx
+   ```
 
-# Install app dependencies and build
-npm install
-npm run build
-npm run start:all
-```
+9. **(Optional) Create Python venv if needed**
+   ```sh
+   # python3 -m venv venv
+   ```
+
+10. **Install app dependencies and build**
+    ```sh
+    npm install
+    npm run build
+    npm run start:all
+    ```
 
 **Notes:**
-- Make sure `/etc/nginx/ssl/orderapp.local.pem` and `/etc/nginx/ssl/orderapp.local-key.pem` include all hostnames you want to serve (e.g., `order.mrmemon.uk`, your LAN IP, and `localhost`).
+- Make sure `/etc/nginx/ssl/orderapp.local.pem` and `/etc/nginx/ssl/orderapp.local-key.pem` include all hostnames you want to serve (set in `.env` as `SERVER_NAMES`).
 - The nginx config proxies `/api/` to the backend and serves the frontend for all other requests.
 - For production, ensure your server's firewall allows ports 80 and 443.
 - For Cloudflare Tunnel, point the service to `https://localhost` if using SSL in nginx.

@@ -1,11 +1,35 @@
+#!/bin/bash
+# This script sets up SSL certificates and runs the Order List App using config from .env
+
+set -e
+
+# Load .env variables
+if [ -f .env ]; then
+  export $(grep -v '^#' .env | xargs)
+else
+  echo ".env file not found!"
+  exit 1
+fi
+
+# Generate SSL certificates using mkcert and SERVER_NAMES from .env
+if [ -z "$SERVER_NAMES" ]; then
+  echo "SERVER_NAMES not set in .env!"
+  exit 1
+fi
+
+mkdir -p /etc/nginx/ssl
+mkcert -install
+mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem $SERVER_NAMES
+
+echo "SSL certificates generated for: $SERVER_NAMES"
+
+echo "Ready to start backend and frontend using config from .env"
+# Example: npm run start:all or your preferred start command
+
 # install nginx reverse proxy server to manage our requests
 apt install nginx
 ufw allow 'Nginx Full'
 
-# install SSL Certificates to get https access
-# replace the Local IP with your servers IP and the domain name with your domain
-mkcert -install
-mkcert -cert-file /etc/nginx/ssl/orderapp.local.pem -key-file /etc/nginx/ssl/orderapp.local-key.pem order.mrmemon.uk 192.168.1.61 $(hostname) localhost 127.0.0.1 ::1
 ufw allow 21
 
 # install npm

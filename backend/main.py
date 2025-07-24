@@ -9,17 +9,16 @@ from openpyxl import load_workbook
 from datetime import datetime
 import glob
 import re
+from . import config
 
 load_dotenv()
 
 app = FastAPI()
 
-# Allow CORS for local frontend
+# Allow CORS for allowed origins from config
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "*"
-    ],
+    allow_origins=[origin.strip() for origin in config.ALLOWED_ORIGINS.split(',')],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -28,8 +27,8 @@ app.add_middleware(
 # In-memory inventory (barcode -> {name, price})
 inventory = {}
 
-UPLOAD_DIR = os.path.join(os.getcwd(), "uploaded_inventory")
-ORDER_SAVE_DIR = os.getenv("ORDER_SAVE_DIR", os.path.join(os.getcwd(), "orders"))
+UPLOAD_DIR = config.UPLOADED_INVENTORY_DIR
+ORDER_SAVE_DIR = config.ORDER_SAVE_DIR
 os.makedirs(UPLOAD_DIR, exist_ok=True)
 os.makedirs(ORDER_SAVE_DIR, exist_ok=True)
 
