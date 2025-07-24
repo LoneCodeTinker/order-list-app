@@ -88,7 +88,7 @@ export default tseslint.config({
 
 ## Ubuntu Server Deployment (as root)
 
-The following steps automate the setup of the Order List App on a fresh Ubuntu server, including nginx reverse proxy, SSL certificates, Python venv, and app deployment. Run these as root or with sudo:
+The following steps automate the setup of the Order List App on a fresh Ubuntu server, including nginx reverse proxy, SSL certificates, Python venv, mDNS/Avahi for .local hostname, and app deployment. Run these as root or with sudo:
 
 1. **Edit the `.env` file** to set your server names, hostnames, local IP, backend and frontend ports, and other config variables. Example:
    ```ini
@@ -97,16 +97,31 @@ The following steps automate the setup of the Order List App on a fresh Ubuntu s
    FRONTEND_PORT=5173
    LOCAL_IP=192.168.1.61
    HOSTNAME=$(hostname)
-   SERVER_NAMES="order.mrmemon.uk 192.168.1.61 $(hostname) localhost 127.0.0.1 ::1"
+   # Optionally set MDNS_HOSTNAME (for mDNS/Avahi). If not set, the deployment script will prompt or use the current hostname.
+   # MDNS_HOSTNAME=yourcustomname.local
+   SERVER_NAMES="order.mrmemon.uk 192.168.1.61 $(hostname) localhost 127.0.0.1 ::1 $MDNS_HOSTNAME"
    # ...other variables...
    ```
 
-2. **Install nginx reverse proxy server**
+2. **Install and configure mDNS/Avahi for .local hostname**
+   - The deployment script will prompt you for a .local hostname (e.g. `orderapp.local`). If you leave it blank, it will use the current hostname.
+   - The script ensures the .local suffix and updates the system hostname, Avahi, and SERVER_NAMES accordingly.
+   ```sh
+   # This is handled automatically by the runAsRoot script:
+   # - Prompts for mDNS hostname if not set
+   # - Ensures .local suffix
+   # - Sets system hostname
+   # - Installs and enables avahi-daemon
+   # - Adds .local hostname to /etc/hosts and SERVER_NAMES
+   ```
+   - This allows you to access the server at `http://yourname.local` from devices on the same network.
+
+3. **Install nginx reverse proxy server**
    ```sh
    apt install nginx
    ```
 
-3. **Install mkcert and generate SSL certificates for HTTPS**
+4. **Install mkcert and generate SSL certificates for HTTPS**
    - Use the server names from your `.env` file:
    ```sh
    mkcert -install
@@ -114,41 +129,41 @@ The following steps automate the setup of the Order List App on a fresh Ubuntu s
    ```
    - If running from a shell that does not support `$SERVER_NAMES`, manually copy the value from `.env`.
 
-4. **Install npm**
+5. **Install npm**
    ```sh
    apt install npm
    ```
 
-5. **Install python venv**
+6. **Install python venv**
    ```sh
    apt install python3-venv
    ```
 
-6. **Clone the app from GitHub**
+7. **Clone the app from GitHub**
    ```sh
    cd ~
    git clone https://github.com/LoneCodeTinker/order-list-app.git orderapp
    cd orderapp/
    ```
 
-7. **Copy nginx config and enable site**
+8. **Copy nginx config and enable site**
    ```sh
    cp nginxConfig /etc/nginx/sites-available/orderapp
    ln -s /etc/nginx/sites-available/orderapp /etc/nginx/sites-enabled/
    ```
 
-8. **Verify config and restart nginx**
+9. **Verify config and restart nginx**
    ```sh
    nginx -t
    systemctl restart nginx
    ```
 
-9. **(Optional) Create Python venv if needed**
-   ```sh
-   # python3 -m venv venv
-   ```
+10. **(Optional) Create Python venv if needed**
+    ```sh
+    # python3 -m venv venv
+    ```
 
-10. **Install app dependencies and build**
+11. **Install app dependencies and build**
     ```sh
     npm install
     npm run build
@@ -160,5 +175,6 @@ The following steps automate the setup of the Order List App on a fresh Ubuntu s
 - The nginx config proxies `/api/` to the backend and serves the frontend for all other requests.
 - For production, ensure your server's firewall allows ports 80 and 443.
 - For Cloudflare Tunnel, point the service to `https://localhost` if using SSL in nginx.
+- mDNS/Avahi allows you to access the server at `http://yourname.local` from any device on the same LAN.
 
 ---

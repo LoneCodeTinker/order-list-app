@@ -65,3 +65,40 @@ pm2 save
 pm2 startup
 # if you want to run the app in development mode, use the following command instead
 # npm run start:all
+
+# --- mDNS/Avahi (Multicast DNS) ---
+# Prompt for mDNS hostname if not set
+if [ -z "$MDNS_HOSTNAME" ]; then
+  read -p "Enter mDNS hostname (without .local, leave blank to use current hostname): " USER_MDNS
+  if [ -z "$USER_MDNS" ]; then
+    MDNS_HOSTNAME=$(hostname)
+  else
+    MDNS_HOSTNAME="$USER_MDNS"
+  fi
+  export MDNS_HOSTNAME
+fi
+
+# Ensure .local suffix
+if [[ "$MDNS_HOSTNAME" != *.local ]]; then
+  MDNS_HOSTNAME="$MDNS_HOSTNAME.local"
+  export MDNS_HOSTNAME
+fi
+
+hostnamectl set-hostname "$MDNS_HOSTNAME"
+
+# Install and enable Avahi for mDNS
+apt install -y avahi-daemon avahi-utils
+systemctl enable avahi-daemon
+systemctl start avahi-daemon
+
+# Add mDNS hostname to /etc/hosts if not present
+if ! grep -q "$MDNS_HOSTNAME" /etc/hosts; then
+  echo "127.0.0.1 $MDNS_HOSTNAME" >> /etc/hosts
+fi
+
+echo "mDNS/Avahi configured. Hostname: $MDNS_HOSTNAME"
+
+# Add mDNS hostname to SERVER_NAMES if not present
+if [[ $SERVER_NAMES != *"$MDNS_HOSTNAME"* ]]; then
+  export SERVER_NAMES="$SERVER_NAMES,$MDNS_HOSTNAME"
+fi

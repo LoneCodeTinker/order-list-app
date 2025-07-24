@@ -18,7 +18,8 @@ BACKEND_PORT = int(getenv('BACKEND_PORT', 8000))
 FRONTEND_PORT = int(getenv('FRONTEND_PORT', 5173))
 LOCAL_IP = getenv('LOCAL_IP', '127.0.0.1')
 HOSTNAME = getenv('HOSTNAME', os.uname().nodename if hasattr(os, 'uname') else 'localhost')
-SERVER_NAMES = getenv('SERVER_NAMES', f'localhost,{LOCAL_IP},{HOSTNAME}')
+MDNS_HOSTNAME = getenv('MDNS_HOSTNAME', os.uname().nodename + '.local' if hasattr(os, 'uname') else 'localhost.local')
+SERVER_NAMES = getenv('SERVER_NAMES', f'localhost,{LOCAL_IP},{HOSTNAME},{MDNS_HOSTNAME}')
 ALLOWED_ORIGINS = getenv('ALLOWED_ORIGINS', f'http://localhost:{FRONTEND_PORT},http://127.0.0.1:{FRONTEND_PORT}')
 
 # --- Remote upload (future) ---
